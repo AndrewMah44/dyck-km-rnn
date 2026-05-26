@@ -1,5 +1,7 @@
-# #%% Imports
+#%% Imports
 import jax
+jax.config.update("jax_enable_x64", True)
+
 import time 
 import yaml
 import json
@@ -13,7 +15,7 @@ from copy import deepcopy
 from datetime import datetime
 from optax import adam, adamw
 
-from dyck_rnn.models.lru import LinearRNN
+from dyck_rnn.models.rnn import SequenceModel
 from dyck_rnn.data.dyck_hmm import dyck_hmm
 from dyck_rnn.data.samplers import powerlaw
 from dyck_rnn.data.save_model import save_model
@@ -29,19 +31,18 @@ with args.config.open("r") as f:
     sweep_config = yaml.safe_load(f)
 
 task = sweep_config['experiment']['task']
-model_class = sweep_config["model"]["class"]
+
 sweep_name = task \
     + f'_k{sweep_config["data"]["k"]}' \
-    + f'_m{sweep_config["data"]["m"]}_' \
-    + model_class\
-    + f'_hidden_sweep' \
+    + f'_m{sweep_config["data"]["m"]}' \
+    + f'_{sweep_config["model"]["cell_type"]}' \
+    + f'_hSweep' \
     + f'_mlp{sweep_config["model"]["readout_depth"]}'
 
 print(f"Fitting {sweep_name}...")
 
 # ====== Set Up Paths ======
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-full_run_dir = Path("runs") / (f'{timestamp}_{sweep_name}')
+full_run_dir = Path("runs") / sweep_name
 
 full_run_dir.mkdir(parents=True, exist_ok=True)
 
@@ -94,8 +95,9 @@ for hidden_size in sweep_config['sweep']['hidden_size']:
     validation_mask = validation_x != (2 * config['data']['k'] + 1)
 
     # ==== Initalize model ====
-    model = LinearRNN(
-        in_size = 2 * config['data']['k'] + 2, 
+    model = SequenceModel(
+        cell_type = config['model']['cell_type'],
+        vocab_size = 2 * config['data']['k'] + 2, 
         hidden_size = config['model']['hidden_size'], 
         out_size = 2 * config['data']['k'] + 2, 
         readout_depth = config['model']['readout_depth'], 
@@ -148,6 +150,7 @@ for hidden_size in sweep_config['sweep']['hidden_size']:
                 config['training']['batch_size'],)
         )
 
+        # Train one epoch
         model, opt_state, loss_history = train_one_epoch(
             model, 
             DyckHMM, 
@@ -159,9 +162,10 @@ for hidden_size in sweep_config['sweep']['hidden_size']:
             opt_state, 
             optimizer,
             key = batch_key)
-
+        
         training_loss_history.append(loss_history)
 
+        # Validation loss
         epoch_validation_loss = loss_func(
             model, 
             validation_x, 
@@ -169,6 +173,7 @@ for hidden_size in sweep_config['sweep']['hidden_size']:
             validation_mask)
         validation_loss_history.append(epoch_validation_loss)
         
+        # Early Stopping/Learning Rate Schedule Logic
         if epoch_validation_loss > min(validation_loss_history):
             # Decrement learning rate
             learning_rate *= 0.5
@@ -194,12 +199,13 @@ for hidden_size in sweep_config['sweep']['hidden_size']:
         
         _, training_key = jr.split(length_key)
 
+        # Save checkpoint
         save_model(model, 
                    checkpoint_dir / (f'fit_{hidden_size:02}_{epoch:02d}'))
         epoch += 1
 
     training_end = time.time()
-    total_train_time = time.time()
+    total_train_time = training_end - training_start
 
     # ==== Save Model ====
     save_model(model, run_dir / 'final.eqx')
@@ -213,6 +219,7 @@ for hidden_size in sweep_config['sweep']['hidden_size']:
     }
     
     metrics = {
+        "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
         "total_train_time": float(total_train_time),
         "train_loss_history": [
             jax.device_get(x).tolist() for x in training_loss_history
