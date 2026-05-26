@@ -1,4 +1,3 @@
-#%%
 import jax
 import jax.numpy as jnp
 import jax.random as jr
@@ -87,7 +86,10 @@ class dyck_hmm():
             return (new_carry, observation), (new_carry, observation)
 
         keys = jr.split(key, num_timesteps)
-        _, ((states, _), obs) = jax.lax.scan(f, ((0, 0), 0), keys)
+        _, ((states, _), obs) = jax.lax.scan(
+            f, 
+            ((jnp.int64(0), jnp.int64(0)), jnp.int64(0)), 
+            keys)
         return states, obs
 
     def batch_sample_sequence(self, batch_size, num_timesteps, min_length, 
