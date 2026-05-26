@@ -1,6 +1,7 @@
 experiment: 
   task: "DyckKM"
   seed: 324
+  n_runs: 5
 
 data:
   k: 2
@@ -10,9 +11,9 @@ data:
   alpha: 0.9
 
 model:
-  class: "LinearRNN"
+  cell_type: 'Linear'
   hidden_size: 64
-  readout_depth : 0
+  readout_depth : 1
   init_scale: 0.9
 
 optimizer:

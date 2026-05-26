@@ -1,0 +1,12 @@
+experiment: 
+  task: "DyckKM"
+  seed: 324
+
+model:
+  run: "DyckKM_k02_m05_Linear_h64_mlp1"
+
+training:
+  validation_size: 32768
+  batch_size: 128
+  batches_per_epoch: 8192
+  max_counter: 3
