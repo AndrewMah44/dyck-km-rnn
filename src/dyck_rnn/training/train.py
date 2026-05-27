@@ -1,4 +1,6 @@
 import jax
+jax.config.update("jax_enable_x64", True)
+
 import time 
 import json
 import yaml
@@ -41,6 +43,14 @@ def train_dyck_rnn(run_name, config):
 
     # ==== Initalize DyckHMM for Data Generation ====
     DyckHMM = dyck_hmm(config['data']['k'], config['data']['m'])
+
+    sample_func = lambda lengths, key: \
+        DyckHMM.batch_sample_sequence(
+            config['training']['batch_size'],
+            config['data']['max_length'],
+            lengths,
+            key = key
+        )
 
     # ===== Generate Validation Data =====
     length_key, sample_key = jr.split(validation_key)
@@ -119,17 +129,23 @@ def train_dyck_rnn(run_name, config):
                 config['training']['batch_size'],)
         )
 
+        _, train_sequences = jax.vmap(sample_func)(
+            epoch_lengths, 
+            jr.split(batch_key, 
+                     config['training']['batches_per_epoch'])
+        )
+        epoch_x = train_sequences[:,:,:-1]
+        epoch_y = train_sequences[:,:,1:]
+        epoch_mask = epoch_x != (2 * DyckHMM.k + 1)
+
         model, opt_state, loss_history = train_one_epoch(
             model, 
-            DyckHMM, 
             loss_func,
-            config['training']['batch_size'], 
-            config['training']['batches_per_epoch'],
-            config['data']['max_length'], 
-            epoch_lengths, 
+            epoch_x,
+            epoch_y,
+            epoch_mask,
             opt_state, 
-            optimizer,
-            key = batch_key)
+            optimizer)
 
         training_loss_history.append(loss_history)
 
