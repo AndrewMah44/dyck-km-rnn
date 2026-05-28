@@ -17,9 +17,9 @@ with args.config.open("r") as f:
     config = yaml.safe_load(f)
 
 # ====== Set Up Run Name ======
-task = config['experiment']['task']
-n_runs = config['experiment']['n_runs']
-seed = config['experiment']['seed']
+task = config["experiment"]["task"]
+n_runs = config["experiment"]["n_runs"]
+seed = config["experiment"]["seed"]
 
 if 'comment' in config['experiment']:
     name = task \
@@ -28,7 +28,7 @@ if 'comment' in config['experiment']:
         + f'_{config["model"]["cell_type"]}' \
         + f'_h{config["model"]["hidden_size"]}' \
         + f'_mlp{config["model"]["readout_depth"]}' \
-        + f'_{config['experiment']['comment']}/' 
+        + f'_{config["experiment"]["comment"]}/' 
 else:
     name = task \
         + f'_k{config["data"]["k"]:02}' \
