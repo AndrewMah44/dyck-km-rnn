@@ -21,15 +21,24 @@ task = config['experiment']['task']
 n_runs = config['experiment']['n_runs']
 seed = config['experiment']['seed']
 
-for run in range(n_runs):
-    run_name = task \
+if 'comment' in config['experiment']:
+    name = task \
         + f'_k{config["data"]["k"]:02}' \
         + f'_m{config["data"]["m"]:02}' \
         + f'_{config["model"]["cell_type"]}' \
         + f'_h{config["model"]["hidden_size"]}' \
         + f'_mlp{config["model"]["readout_depth"]}' \
-        + f'/run_{run:02}'
+        + f'_{config['experiment']['comment']}/' 
+else:
+    name = task \
+        + f'_k{config["data"]["k"]:02}' \
+        + f'_m{config["data"]["m"]:02}' \
+        + f'_{config["model"]["cell_type"]}' \
+        + f'_h{config["model"]["hidden_size"]}' \
+        + f'_mlp{config["model"]["readout_depth"]}/' \
 
+for run in range(n_runs):
+    run_name = name + f'run_{run:02}'
     run_config = deepcopy(config)
     run_config['experiment']['seed'] = seed + run
 
