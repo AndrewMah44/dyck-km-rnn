@@ -2,3 +2,4 @@ runs/
 .DS_Store
 __pycache__
 src/dyck_rnn.egg-info
+.DS_Store
