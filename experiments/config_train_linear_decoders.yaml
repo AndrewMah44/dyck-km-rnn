@@ -1,0 +1,16 @@
+experiment:
+  seed: 1114
+
+run:
+  task: 'DyckKM'
+  k: [2, 4, 8, 16, 32]
+  m: [2, 4, 8]
+  cell_type: 'Linear'
+  hidden_size: [64]
+  readout_depth: 1
+  n_runs: 5
+
+data:
+  num_timesteps: 270
+  train_size: 10_000
+  test_size: 2_000
