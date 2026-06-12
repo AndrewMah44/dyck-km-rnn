@@ -10,7 +10,8 @@ def train_one_epoch(model,
                     epoch_y,
                     epoch_mask,
                     opt_state, 
-                    optimizer):
+                    optimizer,
+                    key):
     
     model_params, model_static = eqx.partition(
         model, eqx.is_inexact_array
@@ -18,7 +19,7 @@ def train_one_epoch(model,
 
     # Function to scan over mini-batches
     def scan_step(carry, input):
-        model_params, opt_state = carry
+        model_params, opt_state, key = carry
         batch_x, batch_y, batch_mask = input
 
         # Combine trainable params (scanned) with static params (not scanned)
@@ -32,18 +33,20 @@ def train_one_epoch(model,
             batch_y, 
             batch_mask, 
             opt_state, 
-            optimizer)
+            optimizer,
+            key)
         
         # Split param
         new_params, _ = eqx.partition(
             scan_model, 
             eqx.is_inexact_array)
         
-        return (new_params, opt_state), loss
+        _, key = jr.split(key, 2)
+        return (new_params, opt_state, key), loss
 
     # Actually scan
-    init_carry = (model_params, opt_state)
-    (final_params, opt_state), loss_history = jax.lax.scan(
+    init_carry = (model_params, opt_state, key)
+    (final_params, opt_state, _), loss_history = jax.lax.scan(
         scan_step, init_carry, xs = (epoch_x, epoch_y, epoch_mask,))
     
     final_model = eqx.combine(final_params, model_static)

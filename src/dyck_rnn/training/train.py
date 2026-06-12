@@ -12,16 +12,17 @@ from pathlib import Path
 from optax import adam, adamw
 from datetime import datetime
 
-from dyck_rnn.models.rnn import SequenceModel
 from dyck_rnn.data.dyck_hmm import dyck_hmm
 from dyck_rnn.data.samplers import powerlaw
 from dyck_rnn.data.save_model import save_model
 from dyck_rnn.training.losses import pred_loss_func
 from dyck_rnn.training.epochs import train_one_epoch
+from dyck_rnn.models.rnn import RecurrentSequenceModel
+from dyck_rnn.models.transformer import TinyTransformer
 
-def train_dyck_rnn(run_name, config):
+def train_dyck_rnn(run_name, config, run_parent="runs"):
     # ====== Set Up Directory ======
-    run_dir = Path("runs") / run_name
+    run_dir = Path(run_parent) / run_name
     checkpoint_dir = run_dir / "checkpoints"
 
     # Stop if model has already been fit
@@ -34,15 +35,17 @@ def train_dyck_rnn(run_name, config):
     run_dir.mkdir(parents=True, exist_ok=True)
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
-    with (run_dir / "config.yaml").open("w") as f:
-        yaml.safe_dump(config, f)
-
     # ==== PRNGKey Management ====
     master_key = jr.PRNGKey(config['experiment']['seed'])
     validation_key, model_key, training_key = jr.split(master_key, 3)
 
     # ==== Initalize DyckHMM for Data Generation ====
-    DyckHMM = dyck_hmm(config['data']['k'], config['data']['m'])
+    k = config['data']['k']
+    m = config['data']['m']
+    DyckHMM = dyck_hmm(k, m)
+
+    # Bounds taken from Hewitt
+    config['data']['max_length'] = 4*m*(m+4)
 
     sample_func = lambda lengths, key: \
         DyckHMM.batch_sample_sequence(
@@ -60,7 +63,7 @@ def train_dyck_rnn(run_name, config):
         config['data']['max_length'], 
         config['data']['alpha'], 
         shape=(config['training']['validation_size'],)
-    )
+    )   #min length of 15 ensures unlikely to overlap with training data
 
     _, validation_sequences = DyckHMM.batch_sample_sequence(
         config['training']['validation_size'], 
@@ -74,23 +77,41 @@ def train_dyck_rnn(run_name, config):
     validation_mask = validation_x != (2 * config['data']['k'] + 1)
 
     # ==== Initalize model ====
-    model = SequenceModel(
-        cell_type = config['model']['cell_type'],
-        vocab_size = 2 * config['data']['k'] + 2, 
-        hidden_size = config['model']['hidden_size'], 
-        out_size = 2 * config['data']['k'] + 2, 
-        readout_depth = config['model']['readout_depth'], 
-        rnn_scale = config['model']['init_scale'],
-        key = model_key)
+    if config['model']['model_class'].lower() == 'recurrent':
+        model = RecurrentSequenceModel(
+            cell_type = config['model']['cell_type'],
+            vocab_size = 2 * config['data']['k'] + 2, 
+            hidden_size = config['model']['hidden_size'], 
+            out_size = 2 * config['data']['k'] + 2, 
+            readout_depth = config['model']['readout_depth'], 
+            rnn_scale = config['model']['init_scale'],
+            key = model_key)
+
+        def loss_func(model, obs, next_obs, mask, key, inference=False):
+            keys = jr.split(key, obs.shape[0])
+            pred_loss = jax.vmap(pred_loss_func, 
+                                in_axes=[None, 0, 0, 0, 0, None])(
+                                model, obs, next_obs, mask, keys, inference)
+
+            return pred_loss.mean()
+    
+    elif config['model']['model_class'].lower() == 'transformer':
+        model = TinyTransformer(
+            vocab_size = 2 * config['data']['k'] + 2, 
+            num_blocks = config['model']['num_blocks'], 
+            num_heads = config['model']['num_heads'],
+            embedding_dim = config['model']['embedding_dim'], 
+            hidden_dim = config['model']['hidden_dim'],
+            max_length = config['model']['max_length'],        # 450 by default
+            key = model_key)
+        
+        loss_func = pred_loss_func
+
+    else:
+        raise ValueError(
+            f"Invalid model class: {config['model']['model_class']}")
 
     # ==== Optimization setup ====
-    def loss_func(model, obs, next_obs, mask):
-        pred_loss = jax.vmap(pred_loss_func, 
-                            in_axes=[None, 0, 0, 0])(
-                            model, obs, next_obs, mask)
-
-        return pred_loss.mean()
-
     learning_rate = config['optimizer']['learning_rate']
     optimizer = optax.chain(
         optax.clip_by_global_norm(1.0),  # Gradient norm clipping
@@ -102,7 +123,9 @@ def train_dyck_rnn(run_name, config):
         model, 
         validation_x, 
         validation_y, 
-        validation_mask)
+        validation_mask,
+        jr.PRNGKey(1),
+        inference=True)
 
     print(f"Initial Validaiton Loss: {initial_validation_loss:0.4f}")
 
@@ -117,12 +140,12 @@ def train_dyck_rnn(run_name, config):
 
     while counter < config['training']['max_counter']:
         epoch_start_time = time.time()
-        batch_key, length_key = jr.split(training_key, 2)
+        batch_key, length_key, step_key = jr.split(training_key, 3)
 
         # Sequence lengths
         epoch_lengths = powerlaw(
             length_key, 
-            config['data']['min_length'], 
+            1, 
             config['data']['max_length'], 
             config['data']['alpha'], 
             shape=(config['training']['batches_per_epoch'],
@@ -145,7 +168,8 @@ def train_dyck_rnn(run_name, config):
             epoch_y,
             epoch_mask,
             opt_state, 
-            optimizer)
+            optimizer,
+            step_key)
 
         training_loss_history.append(loss_history)
 
@@ -153,7 +177,10 @@ def train_dyck_rnn(run_name, config):
             model, 
             validation_x, 
             validation_y, 
-            validation_mask)
+            validation_mask,
+            jr.PRNGKey(1),
+            inference=True)
+        
         validation_loss_history.append(epoch_validation_loss)
         
         if epoch_validation_loss > min(validation_loss_history):
@@ -179,7 +206,7 @@ def train_dyck_rnn(run_name, config):
             + f"{epoch_validation_loss} " \
             + f"(counter = {counter})", flush=True)
         
-        _, training_key = jr.split(length_key)
+        _, training_key = jr.split(step_key, 2)
 
         save_model(model, checkpoint_dir / f'checkpoint_{epoch:02d}')
         epoch += 1
@@ -214,3 +241,7 @@ def train_dyck_rnn(run_name, config):
 
     with open(run_dir / "metrics.json", "w") as f:
         json.dump(metrics, f, indent=2)
+
+    # Save config
+    with (run_dir / "config.yaml").open("w") as f:
+        yaml.safe_dump(config, f)
