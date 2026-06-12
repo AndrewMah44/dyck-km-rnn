@@ -6,7 +6,7 @@ import equinox as eqx
 import jax.random as jr
 import jax.numpy as jnp
 from pathlib import Path
-from dyck_rnn.models.rnn import SequenceModel
+from dyck_rnn.models.rnn import RecurrentSequenceModel
 
 
 def _cast_inexact(tree, dtype):
@@ -18,15 +18,15 @@ def _cast_inexact(tree, dtype):
 def load_model(
         run_name, 
         filename="final.eqx", 
-        run_dir="runs", 
+        run_parent_dir="runs", 
         target_dtype=jnp.float64):
     
-    run_path = Path(run_dir) / run_name
+    run_path = Path(run_parent_dir) / run_name
 
     with (run_path / "config.yaml").open("r") as f:
         config = yaml.safe_load(f)
 
-    blank_model = SequenceModel(
+    blank_model = RecurrentSequenceModel(
         cell_type=config["model"]["cell_type"],
         vocab_size=2 * config["data"]["k"] + 2,
         hidden_size=config["model"]["hidden_size"],
