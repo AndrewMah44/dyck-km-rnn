@@ -1,6 +1,6 @@
 experiment: 
   task: "DyckKM"
-  comment: "even_smaller_scale"
+  comment: "long_run"
   seed: 324
   n_runs: 1
 
@@ -13,13 +13,13 @@ experiment:
 data:
   k: 2
   m: 4
-  alpha: 0.9
+  alpha: 0.8
 
 # Remove hidden size - depends on k and m. Relationship is in train.py
 model:
   model_class: 'Recurrent'
   cell_type: 'Linear'
-  readout_depth : 2
+  readout_depth : 1
   init_scale: 0.1
 
 optimizer:
@@ -30,7 +30,7 @@ training:
   validation_size: 32768
   batch_size: 128
   batches_per_epoch: 8192
-  max_counter: 3
+  max_counter: 15
 
 checkpointing:
   save_dir: checkpoints/

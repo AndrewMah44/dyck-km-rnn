@@ -46,6 +46,7 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
 
     # Bounds taken from Hewitt
     config['data']['max_length'] = 4*m*(m+4)
+    print(config)
 
     sample_func = lambda lengths, key: \
         DyckHMM.batch_sample_sequence(
