@@ -1,0 +1,36 @@
+experiment: 
+  task: "DyckKM"
+  comment: "even_smaller_scale"
+  seed: 324
+  n_runs: 1
+
+# (m, max_length)
+# (2, 48)
+# (4, 128)
+# (8, 384)
+
+# Remove max length - depends on k. Relationship is in train.py
+data:
+  k: 2
+  m: 4
+  alpha: 0.9
+
+# Remove hidden size - depends on k and m. Relationship is in train.py
+model:
+  model_class: 'Recurrent'
+  cell_type: 'Linear'
+  readout_depth : 2
+  init_scale: 0.1
+
+optimizer:
+  name: adam
+  learning_rate: 1.0e-3
+
+training:
+  validation_size: 32768
+  batch_size: 128
+  batches_per_epoch: 8192
+  max_counter: 3
+
+checkpointing:
+  save_dir: checkpoints/

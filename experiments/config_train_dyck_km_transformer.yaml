@@ -1,0 +1,33 @@
+experiment: 
+  task: "DyckKM"
+  comment: "test"
+  seed: 324
+  n_runs: 1
+
+data:
+  k: 2
+  m: 5
+  min_length: 1
+  max_length: 84
+  alpha: 0.9
+
+model:
+  model_class: 'transformer'
+  num_blocks: 1
+  num_heads: 1
+  embedding_dim : 64
+  hidden_dim: 64
+  max_length: 450
+
+optimizer:
+  name: adam
+  learning_rate: 1.0e-3
+
+training:
+  validation_size: 32768
+  batch_size: 128
+  batches_per_epoch: 8192
+  max_counter: 3
+
+checkpointing:
+  save_dir: checkpoints/

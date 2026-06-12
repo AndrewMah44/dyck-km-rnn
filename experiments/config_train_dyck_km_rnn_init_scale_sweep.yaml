@@ -1,20 +1,22 @@
 experiment: 
   task: "DyckKM"
   seed: 324
-  n_runs: 5
+  n_runs: 1
 
+sweep:
+  init_scale: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+
+# Remove max length - depends on k. Relationship is in train.py
 data:
   k: 2
-  m: 5
-  min_length: 1
-  max_length: 84
+  m: 4
   alpha: 0.9
 
+# Remove hidden size - depends on k and m. Relationship is in train.py
 model:
+  model_class: 'Recurrent'
   cell_type: 'Linear'
-  hidden_size: 64
   readout_depth : 1
-  init_scale: 0.9
 
 optimizer:
   name: adam
