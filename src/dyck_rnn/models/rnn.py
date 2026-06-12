@@ -36,7 +36,8 @@ class Readout(eqx.Module):
                  in_size, 
                  hidden_size, 
                  out_size, 
-                 *, key):
+                 *, 
+                 key):
 
         linear_key, *mlp_keys = jr.split(key, depth+1)
         mlp_layers = [
@@ -177,7 +178,7 @@ class RNN(eqx.Module):
         _, hiddens = jax.lax.scan(f, init_carry, inputs_embedded)
         return hiddens
 
-class SequenceModel(eqx.Module):
+class RecurrentSequenceModel(eqx.Module):
     rnn: RNN
     readout: Readout
 
@@ -208,7 +209,8 @@ class SequenceModel(eqx.Module):
             out_size = out_size, 
             key = readout_key)
         
-    def __call__(self, inputs):
+    # include key and inference inputs to make compatible with transformers...
+    def __call__(self, inputs, key=None, inference=None):
         h = self.rnn(inputs)
 
         return jax.vmap(self.readout)(h)
