@@ -18,11 +18,11 @@ with args.config.open("r") as f:
     config = yaml.safe_load(f)
 
 # ====== Set Up Run Name ======
-k = config["data"]["k"]
-m = config["data"]["m"]
-task = config["experiment"]["task"]
-n_runs = config["experiment"]["n_runs"]
-seed = config["experiment"]["seed"]
+k = config['data']['k']
+m = config['data']['m']
+task = config['experiment']['task']
+n_runs = config['experiment']['n_runs']
+seed = config['experiment']['seed']
 
 # Linear and LSTM hidden sizes are based on Hewitt. 
 # GRU is to match number of linear params
@@ -39,39 +39,36 @@ elif config['model']['cell_type'].lower() == 'gru':
 if config['model']['model_class'].lower() == 'recurrent':
     if 'comment' in config['experiment']:
         name = task \
-            + f'_k{k:02}_m{m:02}' \
-            + f'_{config["model"]["cell_type"]}' \
-            + f'_h{config["model"]["hidden_size"]}' \
-            + f'_mlp{config["model"]["readout_depth"]}' \
-            + f'_{config["experiment"]["comment"]}/' 
+            + f"_k{k:02}_m{m:02}" \
+            + f"_{config['model']['cell_type']}" \
+            + f"_h{config['model']['hidden_size']}" \
+            + f"_mlp{config['model']['readout_depth']}" \
+            + f"_{config['experiment']['comment']}/"
     else:
         name = task \
-            + f'_k{config["data"]["k"]:02}' \
-            + f'_m{config["data"]["m"]:02}' \
-            + f'_{config["model"]["cell_type"]}' \
-            + f'_h{config["model"]["hidden_size"]}' \
-            + f'_mlp{config["model"]["readout_depth"]}/'
+            + f"_k{k:02}_m{m:02}" \
+            + f"_{config['model']['cell_type']}" \
+            + f"_h{config['model']['hidden_size']}" \
+            + f"_mlp{config['model']['readout_depth']}" \
         
 elif config['model']['model_class'].lower() == 'transformer':
     if 'comment' in config['experiment']:
         name = task \
-            + f'_k{config["data"]["k"]:02}' \
-            + f'_m{config["data"]["m"]:02}' \
-            + f'_transformer' \
-            + f'_b{config["model"]["num_blocks"]}' \
-            + f'_h{config["model"]["num_heads"]}' \
-            + f'_ed{config["model"]["embedding_dim"]}' \
-            + f'_hd{config["model"]["hidden_dim"]}' \
-            + f'_{config["experiment"]["comment"]}/' 
+            + f"_k{k:02}_m{m:02}" \
+            + f"_transformer" \
+            + f"_b{config['model']['num_blocks']}" \
+            + f"_h{config['model']['num_heads']}" \
+            + f"_ed{config['model']['embedding_dim']}" \
+            + f"_hd{config['model']['hidden_dim']}" \
+            + f"_{config['experiment']['comment']}/" 
     else:
         name = task \
-            + f'_k{config["data"]["k"]:02}' \
-            + f'_m{config["data"]["m"]:02}' \
-            + f'_transformer' \
-            + f'_b{config["model"]["num_blocks"]}' \
-            + f'_h{config["model"]["num_heads"]}' \
-            + f'_ed{config["model"]["embedding_dim"]}' \
-            + f'_hd{config["model"]["hidden_dim"]}'
+            + f"_k{k:02}_m{m:02}" \
+            + f"_transformer" \
+            + f"_b{config['model']['num_blocks']}" \
+            + f"_h{config['model']['num_heads']}" \
+            + f"_ed{config['model']['embedding_dim']}" \
+            + f"_hd{config['model']['hidden_dim']}"
 else:
     raise ValueError(f"{config['model']['model_class']} is not valid class")
         
