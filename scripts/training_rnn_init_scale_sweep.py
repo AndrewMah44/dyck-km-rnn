@@ -31,23 +31,23 @@ else:
 
 # Linear and LSTM hidden sizes are based on Hewitt. 
 # GRU is to match number of linear params
-if sweep_config['model']['cell_type'].lower() == 'linear':
-    sweep_config['model']['hidden_size'] = int(jnp.ceil(6 * m * jnp.log2(k)))
+if sweep_config["model"]["cell_type"].lower() == "linear":
+    sweep_config["model"]["hidden_size"] = int(jnp.ceil(6 * m * jnp.log2(k)))
 
-elif sweep_config['model']['cell_type'].lower() == 'lstm':
-    sweep_config['model']['hidden_size'] = int(jnp.ceil(3 * m * jnp.log2(k)))
+elif sweep_config["model"]["cell_type"].lower() == "lstm":
+    sweep_config["model"]["hidden_size"] = int(jnp.ceil(3 * m * jnp.log2(k)))
 
-elif sweep_config['model']['cell_type'].lower() == 'gru':
-    sweep_config['model']['hidden_size'] = int(jnp.floor(
+elif sweep_config["model"]["cell_type"].lower() == "gru":
+    sweep_config["model"]["hidden_size"] = int(jnp.floor(
         0.6 * jnp.ceil(6 * m * jnp.log2(k))))
 
 sweep_name = task \
-    + f'_k{sweep_config["data"]["k"]:02}' \
-    + f'_m{sweep_config["data"]["m"]:02}' \
-    + f'_{sweep_config["model"]["cell_type"].lower()}' \
-    + f'_h{sweep_config['model']['hidden_size']}' \
-    + f'_mlp{sweep_config["model"]["readout_depth"]}' \
-    + '_InitScaleSweep_' \
+    + f"_k{sweep_config["data"]["k"]:02}" \
+    + f"_m{sweep_config["data"]["m"]:02}" \
+    + f"_{sweep_config["model"]["cell_type"].lower()}" \
+    + f"_h{sweep_config["model"]["hidden_size"]}" \
+    + f"_mlp{sweep_config["model"]["readout_depth"]}" \
+    + "_InitScaleSweep_" \
     + comment
 
 print(f"Fitting {sweep_name}...")
@@ -60,11 +60,11 @@ with (full_run_dir / "sweep_config.yaml").open("w") as f:
     yaml.safe_dump(sweep_config, f)
 
 # ====== Sweep over initial scale ======
-for init_scale in sweep_config['sweep']['init_scale']:
+for init_scale in sweep_config["sweep"]["init_scale"]:
     print(init_scale)
 
     run_config = deepcopy(sweep_config)
-    run_config['model']['init_scale'] = init_scale
+    run_config["model"]["init_scale"] = init_scale
 
     run_name = f"fit_{init_scale}"
     train_dyck_rnn(run_name, run_config, run_parent=full_run_dir)
