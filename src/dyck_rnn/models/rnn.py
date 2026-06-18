@@ -78,27 +78,32 @@ class LinearRecurrentCell(eqx.Module):
     def __init__(self, in_size, hidden_size, *, init_scale=0.1, key):
         in_key, rec_key = jr.split(key, num=2)
 
-        # Create embedding module
-        self.W_u = eqx.nn.Linear(
-            in_size, 
-            hidden_size,
-            use_bias = False,
-            key = in_key)
+        self.W_u = init_scale * jr.orthogonal(in_key, hidden_size)
+        self.W_rec = jax.random.normal(
+            rec_key, 
+            (hidden_size, hidden_size)) * (1/jnp.sqrt(hidden_size))
 
-        # Create recurrent connectivity matrix as a scaled orthogonal matrix
-        self.W_rec = init_scale * jr.orthogonal(rec_key, hidden_size)
+        # # Create embedding module
+        # self.W_u = eqx.nn.Linear(
+        #     in_size, 
+        #     hidden_size,
+        #     use_bias = False,
+        #     key = in_key)
 
-    def __call__(self, u, h):
+        # # Create recurrent connectivity matrix as a scaled orthogonal matrix
+        # self.W_rec = init_scale * jr.orthogonal(rec_key, hidden_size)
+
+    def __call__(self, inp, hidden):
         """
         Single step update of a linear RNN unit.
 
-        u: input on trial t                     [scalar]
-        h: previous RNN unit activation         [1, hidden_size]
+        inp:   input on trial t              [scalar]
+        hidden: previous RNN unit activation [1, hidden_size]
 
-        Returns: updated RNN unit activation    [1, hidden_size]
+        Returns: updated RNN unit activation [1, hidden_size]
         """
         
-        return self.W_rec @ h + self.W_u(u)
+        return self.W_rec @ hidden + self.W_u @ inp
 
 class RNN(eqx.Module):
     """
@@ -122,6 +127,7 @@ class RNN(eqx.Module):
     Win: eqx.nn.Embedding
     rnn: eqx.Module
     hidden_size: int = eqx.field(static=True)
+    cell_type: str = eqx.field(static=True)
 
     def __init__(self,
                  cell_type, 
@@ -130,6 +136,7 @@ class RNN(eqx.Module):
                  *, 
                  rnn_scale = 0.1,
                  key):
+        self.cell_type = cell_type.lower()        
         in_key, rnn_key = jr.split(key, 2)
 
         self.hidden_size = hidden_size
@@ -140,20 +147,20 @@ class RNN(eqx.Module):
             key = in_key
         )
 
-        if cell_type == 'Linear':
+        if self.cell_type == 'linear':
             self.rnn = LinearRecurrentCell(
                 hidden_size, 
                 hidden_size,
                 init_scale=rnn_scale, 
                 key = rnn_key)
             
-        elif cell_type == 'GRU':
+        elif self.cell_type == 'gru':
             self.rnn = eqx.nn.GRUCell(
                 hidden_size,
                 hidden_size,
                 key = rnn_key)
             
-        elif cell_type == 'LSTM':
+        elif self.cell_type == 'lstm':
             self.rnn = eqx.nn.LSTMCell(
                 hidden_size,
                 hidden_size,
@@ -165,17 +172,28 @@ class RNN(eqx.Module):
     def __call__(self, inputs):
         inputs_embedded = jax.vmap(self.Win)(inputs)
 
-        def f(carry, inp):
-            # Compute next hidden state
-            h = self.rnn(carry, inp)
+        if self.cell_type == 'lstm':
+            def f(carry, inp):
+                carry = self.rnn(inp, carry)
+                h, _ = carry
 
-            return h, h
+                return carry, h
 
-        # Initialize carry to zeros with the correct hidden_size
-        init_carry = jnp.zeros((self.hidden_size,))
+            init_carry = (jnp.zeros(self.hidden_size),
+                          jnp.zeros(self.hidden_size))
+
+        else:
+            def f(carry, inp):
+                # Compute next hidden state
+                h = self.rnn(inp, carry)
+
+                return h, h
+            
+            init_carry = jnp.zeros((self.hidden_size,))
 
         # Scan over time dimension
         _, hiddens = jax.lax.scan(f, init_carry, inputs_embedded)
+        
         return hiddens
 
 class RecurrentSequenceModel(eqx.Module):
@@ -192,7 +210,6 @@ class RecurrentSequenceModel(eqx.Module):
             *, 
             rnn_scale = 0.1,
             key):
-        
         rnn_key, readout_key = jr.split(key, 2)
 
         self.rnn = RNN(

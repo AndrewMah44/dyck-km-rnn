@@ -1,26 +1,37 @@
 experiment: 
   task: "DyckKM"
+<<<<<<< HEAD
   comment: "long_run"
   seed: 324
+=======
+  seed: 1114
+>>>>>>> 58715eb2526e4d8c29329d358deeb4e473e1e331
   n_runs: 1
-
-# (m, max_length)
-# (2, 48)
-# (4, 128)
-# (8, 384)
 
 # Remove max length - depends on k. Relationship is in train.py
 data:
+<<<<<<< HEAD
   k: 2
   m: 4
   alpha: 0.8
+=======
+  k: 4
+  m: 8
+  alpha: 0.9
+>>>>>>> 58715eb2526e4d8c29329d358deeb4e473e1e331
 
 # Remove hidden size - depends on k and m. Relationship is in train.py
 model:
   model_class: 'Recurrent'
+<<<<<<< HEAD
   cell_type: 'Linear'
   readout_depth : 1
   init_scale: 0.1
+=======
+  cell_type: 'linear'
+  readout_depth : 1
+  init_scale: 0.2
+>>>>>>> 58715eb2526e4d8c29329d358deeb4e473e1e331
 
 optimizer:
   name: adam

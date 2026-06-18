@@ -24,6 +24,11 @@ task = sweep_config["experiment"]["task"]
 n_runs = sweep_config["experiment"]["n_runs"]
 seed = sweep_config["experiment"]["seed"]
 
+if "comment" in sweep_config["experiment"]:
+    comment = sweep_config["experiment"]["comment"]
+else:
+    comment = ""
+
 # Linear and LSTM hidden sizes are based on Hewitt. 
 # GRU is to match number of linear params
 if sweep_config['model']['cell_type'].lower() == 'linear':
@@ -37,12 +42,13 @@ elif sweep_config['model']['cell_type'].lower() == 'gru':
         0.6 * jnp.ceil(6 * m * jnp.log2(k))))
 
 sweep_name = task \
-    + f'_k{sweep_config["data"]["k"]}' \
-    + f'_m{sweep_config["data"]["m"]}' \
-    + f'_{sweep_config["model"]["cell_type"]}' \
+    + f'_k{sweep_config["data"]["k"]:02}' \
+    + f'_m{sweep_config["data"]["m"]:02}' \
+    + f'_{sweep_config["model"]["cell_type"].lower()}' \
     + f'_h{sweep_config['model']['hidden_size']}' \
     + f'_mlp{sweep_config["model"]["readout_depth"]}' \
-    + '_InitScaleSweep'
+    + '_InitScaleSweep_' \
+    + comment
 
 print(f"Fitting {sweep_name}...")
 
@@ -62,7 +68,3 @@ for init_scale in sweep_config['sweep']['init_scale']:
 
     run_name = f"fit_{init_scale}"
     train_dyck_rnn(run_name, run_config, run_parent=full_run_dir)
-
-
-
-
