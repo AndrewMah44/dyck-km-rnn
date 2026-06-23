@@ -27,49 +27,24 @@ seed = config['experiment']['seed']
 # Linear and LSTM hidden sizes are based on Hewitt. 
 # GRU is to match number of linear params
 if config['model']['cell_type'].lower() == 'linear':
-    config['model']['hidden_size'] = max(
-        int(jnp.ceil(6 * m * jnp.log2(k))),
-        64)
+    config['model']['hidden_size'] = int(jnp.ceil(6 * m * jnp.log2(k)))
 
 elif config['model']['cell_type'].lower() in ['lstm', 'gru']:
     config['model']['hidden_size'] = int(jnp.ceil(3 * m * jnp.log2(k)))
 
-
-if config['model']['model_class'].lower() == 'recurrent':
-    if 'comment' in config['experiment']:
-        name = task \
-            + f"_k{k:02}_m{m:02}" \
-            + f"_{config['model']['cell_type']}" \
-            + f"_h{config['model']['hidden_size']}" \
-            + f"_mlp{config['model']['readout_depth']}" \
-            + f"_{config['experiment']['comment']}/"
-    else:
-        name = task \
-            + f"_k{k:02}_m{m:02}" \
-            + f"_{config['model']['cell_type']}" \
-            + f"_h{config['model']['hidden_size']}" \
-            + f"_mlp{config['model']['readout_depth']}/" \
-        
-elif config['model']['model_class'].lower() == 'transformer':
-    if 'comment' in config['experiment']:
-        name = task \
-            + f"_k{k:02}_m{m:02}" \
-            + f"_transformer" \
-            + f"_b{config['model']['num_blocks']}" \
-            + f"_h{config['model']['num_heads']}" \
-            + f"_ed{config['model']['embedding_dim']}" \
-            + f"_hd{config['model']['hidden_dim']}" \
-            + f"_{config['experiment']['comment']}/" 
-    else:
-        name = task \
-            + f"_k{k:02}_m{m:02}" \
-            + f"_transformer" \
-            + f"_b{config['model']['num_blocks']}" \
-            + f"_h{config['model']['num_heads']}" \
-            + f"_ed{config['model']['embedding_dim']}" \
-            + f"_hd{config['model']['hidden_dim']}/"
+if 'comment' in config['experiment']:
+    name = task \
+        + f"_k{k:02}_m{m:02}" \
+        + f"_{config['model']['cell_type']}" \
+        + f"_h{config['model']['hidden_size']}" \
+        + f"_mlp{config['model']['readout_depth']}" \
+        + f"_{config['experiment']['comment']}/"
 else:
-    raise ValueError(f"{config['model']['model_class']} is not valid class")
+    name = task \
+        + f"_k{k:02}_m{m:02}" \
+        + f"_{config['model']['cell_type']}" \
+        + f"_h{config['model']['hidden_size']}" \
+        + f"_mlp{config['model']['readout_depth']}/"
         
 for run in range(n_runs):
     run_name = name + f'run_{run:02}'
