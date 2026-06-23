@@ -27,13 +27,13 @@ def load_model(
         config = yaml.safe_load(f)
 
     blank_model = RecurrentSequenceModel(
-        cell_type=config["model"]["cell_type"],
-        vocab_size=2 * config["data"]["k"] + 2,
-        hidden_size=config["model"]["hidden_size"],
-        out_size=2 * config["data"]["k"] + 2,
-        readout_depth=config["model"]["readout_depth"],
-        rnn_scale=config["model"]["init_scale"],
-        key=jr.PRNGKey(config["experiment"]["seed"]),
+        cell_type=config['model']['cell_type'],
+        vocab_size=2 * config['data']['k'] + 2,
+        hidden_size=config['model']['hidden_size'],
+        out_size=2 * config['data']['k'] + 2,
+        readout_depth=config['model']['readout_depth'],
+        rnn_scale=config['model']['init_scale'],
+        key=jr.PRNGKey(config['experiment']['seed']),
     )
 
     # Try loading in the checkpoint's native dtype.
