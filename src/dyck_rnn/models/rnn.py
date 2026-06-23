@@ -83,16 +83,6 @@ class LinearRecurrentCell(eqx.Module):
             rec_key, 
             (hidden_size, hidden_size)) * (1/jnp.sqrt(hidden_size))
 
-        # # Create embedding module
-        # self.W_u = eqx.nn.Linear(
-        #     in_size, 
-        #     hidden_size,
-        #     use_bias = False,
-        #     key = in_key)
-
-        # # Create recurrent connectivity matrix as a scaled orthogonal matrix
-        # self.W_rec = init_scale * jr.orthogonal(rec_key, hidden_size)
-
     def __call__(self, inp, hidden):
         """
         Single step update of a linear RNN unit.
