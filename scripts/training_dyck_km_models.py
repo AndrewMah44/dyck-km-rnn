@@ -27,14 +27,13 @@ seed = config['experiment']['seed']
 # Linear and LSTM hidden sizes are based on Hewitt. 
 # GRU is to match number of linear params
 if config['model']['cell_type'].lower() == 'linear':
-    config['model']['hidden_size'] = int(jnp.ceil(6 * m * jnp.log2(k)))
+    config['model']['hidden_size'] = max(
+        int(jnp.ceil(6 * m * jnp.log2(k))),
+        64)
 
-elif config['model']['cell_type'].lower() == 'lstm':
+elif config['model']['cell_type'].lower() in ['lstm', 'gru']:
     config['model']['hidden_size'] = int(jnp.ceil(3 * m * jnp.log2(k)))
 
-elif config['model']['cell_type'].lower() == 'gru':
-    config['model']['hidden_size'] = int(jnp.floor(
-        0.6 * jnp.ceil(6 * m * jnp.log2(k))))
 
 if config['model']['model_class'].lower() == 'recurrent':
     if 'comment' in config['experiment']:
@@ -49,7 +48,7 @@ if config['model']['model_class'].lower() == 'recurrent':
             + f"_k{k:02}_m{m:02}" \
             + f"_{config['model']['cell_type']}" \
             + f"_h{config['model']['hidden_size']}" \
-            + f"_mlp{config['model']['readout_depth']}" \
+            + f"_mlp{config['model']['readout_depth']}/" \
         
 elif config['model']['model_class'].lower() == 'transformer':
     if 'comment' in config['experiment']:
@@ -68,7 +67,7 @@ elif config['model']['model_class'].lower() == 'transformer':
             + f"_b{config['model']['num_blocks']}" \
             + f"_h{config['model']['num_heads']}" \
             + f"_ed{config['model']['embedding_dim']}" \
-            + f"_hd{config['model']['hidden_dim']}"
+            + f"_hd{config['model']['hidden_dim']}/"
 else:
     raise ValueError(f"{config['model']['model_class']} is not valid class")
         
