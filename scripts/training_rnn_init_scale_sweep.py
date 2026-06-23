@@ -25,7 +25,7 @@ n_runs = sweep_config['experiment']['n_runs']
 seed = sweep_config['experiment']['seed']
 
 if "comment" in sweep_config['experiment']:
-    comment = "_" + sweep_config['experiment']['comment']
+    comment = sweep_config['experiment']['comment']
 else:
     comment = ""
 
@@ -47,7 +47,7 @@ sweep_name = task \
     + f"_{sweep_config['model']['cell_type'].lower()}" \
     + f"_h{sweep_config['model']['hidden_size']}" \
     + f"_mlp{sweep_config['model']['readout_depth']}" \
-    + "_InitScaleSweep" \
+    + "_InitScaleSweep_" \
     + comment
 
 print(f"Fitting {sweep_name}...")
@@ -60,12 +60,7 @@ with (full_run_dir / "sweep_config.yaml").open("w") as f:
     yaml.safe_dump(sweep_config, f)
 
 # ====== Sweep over initial scale ======
-min_scale = sweep_config['sweep']['min_scale']
-max_scale = sweep_config['sweep']['max_scale']
-n_scales = sweep_config['sweep']['n_scales']
-scales = jnp.linspace(min_scale, max_scale, n_scales)
-
-for init_scale in scales:
+for init_scale in sweep_config['sweep']['init_scale']:
     print(init_scale)
 
     run_config = deepcopy(sweep_config)

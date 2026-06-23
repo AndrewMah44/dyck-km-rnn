@@ -4,9 +4,7 @@ experiment:
   n_runs: 1
 
 sweep:
-  min_scale: 0.1
-  max_scale: 0.9
-  n_scales: 9
+  init_scale: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 
 # Remove max length - depends on k. Relationship is in train.py
 data:
