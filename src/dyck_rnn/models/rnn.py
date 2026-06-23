@@ -77,21 +77,15 @@ class LinearRecurrentCell(eqx.Module):
 
     def __init__(self, in_size, hidden_size, *, init_scale=0.1, key):
         in_key, rec_key = jr.split(key, num=2)
-
-        self.W_u = init_scale * jr.orthogonal(in_key, hidden_size)
+    
+        self.W_u = init_scale * jr.orthogonal(
+            in_key, 
+            n = hidden_size,
+            m = in_size)
+        
         self.W_rec = jax.random.normal(
             rec_key, 
-            (hidden_size, hidden_size)) * (1/jnp.sqrt(hidden_size))
-
-        # # Create embedding module
-        # self.W_u = eqx.nn.Linear(
-        #     in_size, 
-        #     hidden_size,
-        #     use_bias = False,
-        #     key = in_key)
-
-        # # Create recurrent connectivity matrix as a scaled orthogonal matrix
-        # self.W_rec = init_scale * jr.orthogonal(rec_key, hidden_size)
+            (hidden_size, hidden_size)) * (1/ hidden_size)
 
     def __call__(self, inp, hidden):
         """
