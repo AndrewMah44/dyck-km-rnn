@@ -29,12 +29,8 @@ seed = config['experiment']['seed']
 if config['model']['cell_type'].lower() == 'linear':
     config['model']['hidden_size'] = int(jnp.ceil(6 * m * jnp.log2(k)))
 
-elif config['model']['cell_type'].lower() == 'lstm':
+elif config['model']['cell_type'].lower() in ['lstm', 'gru']:
     config['model']['hidden_size'] = int(jnp.ceil(3 * m * jnp.log2(k)))
-
-elif config['model']['cell_type'].lower() == 'gru':
-    config['model']['hidden_size'] = int(jnp.floor(
-        0.6 * jnp.ceil(6 * m * jnp.log2(k))))
 
 if config['model']['model_class'].lower() == 'recurrent':
     if 'comment' in config['experiment']:
