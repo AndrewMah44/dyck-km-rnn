@@ -11,90 +11,92 @@ from pathlib import Path
 from itertools import product
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
-from jax.scipy.special import kl_div
+from dyck_rnn.data.samplers import powerlaw
 
 from dyck_rnn.data.dyck_hmm import dyck_hmm
 from dyck_rnn.utils.get_depth import get_depth
 from dyck_rnn.data.load_model import load_model
 
-# Experiment
-task = "DyckKM"
-seed = 324
+eval_config = {
+    'experiment': {
+        'seed': 1114,
+        'n_trials': 5
+    },
+    'run': {
+        'task': 'DyckKM',
+        'k': [2, 4, 8, 16, 32],
+        'm': [2, 4, 8],
+        'cell_type': 'Linear',
+        'readout_depth': 1,
+        'hidden_size': [64],
+        'n_runs': 5
+    },
+    'data': {
+        'train_size': 50_000,
+        'test_size': 10_000,
+    }
+}
 
-# Data
-k = 2
-m = 5
-test_size = 50_000
-num_timesteps = 84
-
-# Model
-cell_type = 'Linear'
-hidden_size = 64
-mlp_depth = 1
-
+run_name = "DyckKM_k02_m04_linear_h24_mlp1"
 run = 0
 
-# ==== Path Mangement ====
-run_parent_dir = Path("/Users/amah/Documents/GitHub/dyck-km-rnn/runs/")
-run_name = task \
-    + f"_k{k:02}_m{m:02}" \
-    + f"_{cell_type}_h{hidden_size}_mlp{mlp_depth}" \
-    + f"/run_{run:02}"
-run_dir = run_parent_dir / run_name
+# ==== Load Model ====
+model_dir = "/Users/amah/Documents/GitHub/dyck-km-rnn/runs/old2"
+run_dir = Path(model_dir) / run_name / f"run_{run:02}"
 
-# ==== RNG Management ====
-key = jr.PRNGKey(seed)
+with open(run_dir / "config.yaml", "r") as file:
+    model_config = yaml.safe_load(file)
 
-# ==== Generate Datasets ====
-DyckHMM = dyck_hmm(k, m)
-
-states, sequences = DyckHMM.batch_sample_sequence(
-    batch_size = test_size, 
-    num_timesteps = num_timesteps, 
-    min_length = 15, 
-    key = key)
-mask = (sequences < 2 * DyckHMM.k).flatten()
-
-states = states.flatten()[mask]
-depth = get_depth(states, k, m)
-
-# ==== Load ====
-model = load_model(run_name, run_parent_dir=run_parent_dir)
+model = load_model(
+    run_name + f"/run_{run:02}", 
+    run_parent_dir = model_dir)
 rnn = model.rnn
 readout = model.readout
 
-decoder_class = 'logistic'
-depth_decoder_file = run_dir / f"decoders/depth_{decoder_class}_decoder.pkl"
+# ==== Generate Test Dataset ====
+k = model_config['data']['k']
+m = model_config['data']['m']
+max_length = (4 * m * (m + 4))
+DyckHMM = dyck_hmm(k, m)
 
-with open(depth_decoder_file, "rb") as file:
-    decoder_file = pkl.load(file)
-
-with open(run_dir / f"decoders/decoder_config.yaml", "r") as file:
-    training_config = yaml.safe_load(file)
-
-#%% ==== Generate Datasets ====
-master_key = jr.PRNGKey(training_config['experiment']['seed'])
-
+master_key = jr.PRNGKey(eval_config['experiment']['seed'])
 train_key, test_key = jr.split(master_key, 2)
-DyckHMM = dyck_hmm(
-    training_config['run']['k'][0],
-    training_config['run']['m'][0])
+
+# Decoder Training Data
+train_data_key, train_length_key = jr.split(train_key, 2)
+train_lengths = powerlaw(
+    train_length_key, 
+    15, 
+    max_length, 
+    model_config['data']['alpha'], 
+    shape=(eval_config['data']['train_size'],)
+)
 
 train_states, train_sequences = DyckHMM.batch_sample_sequence(
-    batch_size = training_config['data']['train_size'], 
-    num_timesteps = training_config['data']['num_timesteps'], 
-    min_length = 15, 
-    key = train_key)
+    batch_size = eval_config['data']['train_size'], 
+    num_timesteps = max_length, 
+    min_length = train_lengths, 
+    key = train_data_key)
 train_mask = (train_sequences < 2 * DyckHMM.k)
-train_states = train_states[train_mask]
+train_states_vec = train_states[train_mask]
+
+# Decoder Test Data
+test_data_key, test_length_key = jr.split(test_key, 2)
+test_lengths = powerlaw(
+    test_length_key, 
+    15, 
+    max_length, 
+    model_config['data']['alpha'], 
+    shape=(eval_config['data']['test_size'],)
+)
 
 test_states, test_sequences = DyckHMM.batch_sample_sequence(
-    batch_size = training_config['data']['test_size'], 
-    num_timesteps = training_config['data']['num_timesteps'], 
-    min_length = 15, 
-    key = test_key)
+    batch_size = eval_config['data']['test_size'], 
+    num_timesteps = max_length, 
+    min_length = test_lengths, 
+    key = test_data_key)
 test_mask = (test_sequences < 2 * DyckHMM.k)
-test_states = test_states[test_mask]
+test_states_vec = test_states[test_mask]
 
 # ==== RNN Activity ====
 train_activity_mat = jax.vmap(rnn)(train_sequences)
@@ -120,29 +122,42 @@ def get_full_stack(state, k, m):
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
-from copy import deepcopy
-
-base_decoder = make_pipeline(
-            StandardScaler(),
-            LogisticRegression(
-                solver="lbfgs",
-                max_iter=5000,
-                tol=1e-4,
-                C=1.0,
-            ),
-        )
 
 stack_item_decoders = []
 for n in range(m):
-    train_stack_items = get_stack_item(train_states, n = n, k = k)
-    test_stack_items = get_stack_item(test_states, n = n, k = k)
+    train_stack_items = get_stack_item(train_states_vec, n = n, k = k)
+    test_stack_items = get_stack_item(test_states_vec, n = n, k = k)
 
-    stack_item_decoder = deepcopy(base_decoder)
+    stack_item_decoder = LogisticRegression(
+        solver="lbfgs",
+        max_iter=5000,
+        tol=1e-4,
+        C=1.0)
 
     stack_item_decoder.fit(train_activity, train_stack_items)
     print(stack_item_decoder.score(test_activity, test_stack_items))
 
     stack_item_decoders.append(stack_item_decoder)
+
+def get_state_stack(state, decoders):
+    return [
+        decoder.predict(state.reshape(1,-1)).item() 
+        for decoder in decoders]
+
+#%%
+
+Wrec = model.rnn.rnn.W_rec
+h = test_activity[jnp.where(test_states_vec == 0)[0][0]]
+h2 = Wrec @ h
+h3 = Wrec @ h2
+h4 = Wrec @ h3
+h5 = Wrec @ h4
+
+print(get_state_stack(h, stack_item_decoders))
+print(get_state_stack(h2, stack_item_decoders))
+print(get_state_stack(h3, stack_item_decoders))
+print(get_state_stack(h4, stack_item_decoders))
+print(get_state_stack(h5, stack_item_decoders))
 
 #%% ==== Editing Utils ====
 
@@ -156,11 +171,11 @@ import scipy
 def _subspace_editing(H1, H2, Q):
     return H1 + ((H2 - H1) @ Q) @ Q.T
 
-def subspace_editing_by_state(state1, state2, H, Q, n_samples, key):
+def subspace_editing_by_state(state1, state2, state_vec, H, Q, n_samples, key):
     original_key, target_key = jr.split(key, 2)
 
-    orig_state = jnp.where(jnp.isin(train_states, state1))[0]
-    target_state = jnp.where(jnp.isin(train_states, state2))[0]
+    orig_state = jnp.where(jnp.isin(state_vec, state1))[0]
+    target_state = jnp.where(jnp.isin(state_vec, state2))[0]
 
     orig_idx = jr.choice(
         original_key, 
@@ -188,51 +203,161 @@ def plot_next_token_prediction(H, ax, color, linestyle='-', title=None):
     ax.set_title(title)
 
 #%% ==== Editing Stack Content, N = 0. Hand-picked examples ====
-Q = scipy.linalg.orth(stack_item_decoders[0][-1].coef_.T)
-
-key1, key2 = jr.split(jr.PRNGKey(1))
+Q = scipy.linalg.orth(stack_item_decoders[0].coef_.T)
 n_samples = 5_000
+key1, key2 = jr.split(jr.PRNGKey(1))
 
-x = jnp.arange(1, 31)
+for state in range(30):
+    idx1 = jr.choice(
+        key1, 
+        jnp.where(test_states_vec == state)[0], 
+        (n_samples,))
+    idx2 = jr.choice(
+        key2, 
+        jnp.where(test_states_vec == state+1)[0], 
+        (n_samples,))
 
-H_prime1, H_orig1, H_target1 = subspace_editing_by_state(
-     3, 4, train_activity, Q, n_samples, key1)
-H_prime2, H_orig2, H_target2 = subspace_editing_by_state(
-     1, 36, train_activity, Q, n_samples, key2)
+    h1 = test_activity[idx1]
+    h2 = test_activity[idx2]
+    hprime = h1 + (h2 - h1) @ Q @ Q.T
 
-fig, axes = plt.subplots(3, 2, figsize=(6,4))
-plot_next_token_prediction(
-    H_orig1, axes[0,0], 'k', title='Mean Original Ouput')
+    o1 = jax.nn.softmax(jax.vmap(readout)(h1))
+    o2 = jax.nn.softmax(jax.vmap(readout)(h2))
+    oprime = jax.nn.softmax(jax.vmap(readout)(hprime))
 
-plot_next_token_prediction(
-    H_target1, axes[1,0], 'b', title='Mean Target Ouput (Internal)')
+    fig = plt.figure()
+    plt.plot(jnp.mean(o1, axis=0), label='orig')
+    plt.plot(jnp.mean(o2, axis=0), label='target')
+    plt.plot(jnp.mean(oprime, axis=0), 'k--')
+    plt.fill_between(jnp.arange(6),
+                    jnp.mean(oprime, axis=0) + jnp.std(oprime, axis=0),
+                    jnp.mean(oprime, axis=0) - jnp.std(oprime, axis=0),
+                    alpha=0.25, color='k')
+    plt.legend()
+    fig.suptitle([state, state+1])
+    plt.show()
 
-plot_next_token_prediction(
-    H_prime1, axes[2,0], 'r', linestyle='--', title='Mean Edited Ouput')
+    cids = KMeans(4).fit_predict(oprime)
 
+    fig, axes = plt.subplots(2, 2, figsize=(5,5))
+    for cluster, ax in enumerate(axes.flatten()):
+        ax.plot(oprime[cids == cluster].mean(0))
+        ax.set_title(jnp.mean(cids==cluster))
 
-plot_next_token_prediction(
-    H_orig2, axes[0,1], 'k', title='Mean Original Ouput')
+    fig.suptitle([state, state+1])
+    fig.tight_layout()
+    plt.show()
 
-plot_next_token_prediction(
-    H_target2, axes[1,1], 'b', title='Mean Target Ouput (Leaf)')
+    key1, key2 = jr.split(key2, 2)
 
-plot_next_token_prediction(
-    H_prime2, axes[2,1], 'r', linestyle='--', title='Mean Edited Ouput')
+#%%
+cond1 = (test_states_vec % 2 == 0) \
+    & (test_states_vec > 0) \
+    & (test_states_vec < 15)
+idx1 = jr.choice(
+    key1, 
+    jnp.where(cond1)[0], 
+    (n_samples,))
+
+cond2 = (test_states_vec % 2 == 1) \
+    & (test_states_vec > 0) \
+    & (test_states_vec < 15)
+idx2 = jr.choice(
+    key2, 
+    jnp.where(cond2)[0], 
+    (n_samples,))
+
+h1 = test_activity[idx1]
+h2 = test_activity[idx2]
+hprime = h1 + (h2 - h1) @ Q @ Q.T
+
+o1 = jax.nn.softmax(jax.vmap(readout)(h1))
+o2 = jax.nn.softmax(jax.vmap(readout)(h2))
+oprime = jax.nn.softmax(jax.vmap(readout)(hprime))
+
+fig = plt.figure()
+plt.plot(jnp.mean(o1, axis=0), color='b', label='orig')
+plt.fill_between(jnp.arange(6),
+                jnp.mean(o1, axis=0) + jnp.std(o1, axis=0),
+                jnp.mean(o1, axis=0) - jnp.std(o1, axis=0),
+                alpha=0.25, color='b')
+
+plt.plot(jnp.mean(o2, axis=0), color='r', label='target')
+plt.fill_between(jnp.arange(6),
+                jnp.mean(o2, axis=0) + jnp.std(o2, axis=0),
+                jnp.mean(o2, axis=0) - jnp.std(o2, axis=0),
+                alpha=0.25, color='r')
+
+plt.plot(jnp.mean(oprime, axis=0), 'k--')
+plt.fill_between(jnp.arange(6),
+                jnp.mean(oprime, axis=0) + jnp.std(oprime, axis=0),
+                jnp.mean(oprime, axis=0) - jnp.std(oprime, axis=0),
+                alpha=0.25, color='k')
+plt.legend()
+fig.suptitle([state, state+1])
+plt.show()
+
+cid = KMeans(4, random_state = 5).fit_predict(oprime)
+
+fig, axes = plt.subplots(2, 2)
+for i, ax in enumerate(axes.flatten()):
+    ax.plot(oprime[cid == i].mean(0))
+    ax.set_title(jnp.mean(cid==i))
 fig.tight_layout()
+
+#%%
+from sklearn.decomposition import PCA
+
+good_h = hprime[cid == 0]
+bad_h = hprime[cid == 1]
+
+pca = PCA(2).fit(test_activity)
+
+N = 25
+x = jnp.linspace(-20, 20, N)
+y = jnp.linspace(-20, 20, N)
+X, Y = jnp.meshgrid(x, y)
+X, Y = X.flatten(), Y.flatten()
+
+p_mat = jnp.zeros((N**2, 6))
+
+for i, (x, y) in enumerate(zip(X, Y)):
+    h = pca.inverse_transform(jnp.array([x, y]))
+    p_mat = p_mat.at[i].set(
+        jax.nn.softmax(readout(h))
+    )
+
+x, y = pca.transform(test_activity).T
+# plt.imshow(p_mat[:,2].reshape(N, N))
+
+plt.scatter(x, y)
+plt.imshow(p_mat[:,2].reshape(N, N), 
+           extent=[-20, 20, -20, 20])
 
 #%% ==== Editing Stack Content, N = 0. Sampling examples ====
 
 key1, key2, key3, key4 = jr.split(jr.PRNGKey(2), 4)
-n_samples = 5_000
+n_samples = 10_000
 
-x1 = jnp.arange(1, 31)
-x2 = jnp.arange(31, 63)
+x1 = jnp.arange(1, 15)
+x2 = jnp.arange(15, 31)
 
 H_prime1, H_orig1, H_target1 = subspace_editing_by_state(
-     x1[x1 % 2 == 0], x1[x1 % 2 == 1], train_activity, Q, n_samples, key1)
+     x1[x1 % 2 == 0], 
+     x1[x1 % 2 == 1], 
+     test_states_vec, 
+     test_activity, 
+     Q, 
+     n_samples, 
+     key1)
 H_prime2, H_orig2, H_target2 = subspace_editing_by_state(
-     x1[x1 % 2 == 0], x2[x2 % 2 == 1], train_activity, Q, n_samples, key2)
+     x1[x1 % 2 == 0], 
+     x2[x2 % 2 == 1], 
+     test_states_vec, 
+     test_activity, 
+     Q, 
+     n_samples, 
+     key2)
 
 fig, axes = plt.subplots(3, 2, figsize=(6,4))
 plot_next_token_prediction(
@@ -256,9 +381,21 @@ fig.tight_layout()
 
 # ==============
 H_prime1, H_orig1, H_target1 = subspace_editing_by_state(
-     x1[x1 % 2 == 1], x1[x1 % 2 == 0], train_activity, Q, n_samples, key3)
+     x1[x1 % 2 == 1], 
+     x1[x1 % 2 == 0], 
+     test_states_vec, 
+     test_activity, 
+     Q, 
+     n_samples, 
+     key3)
 H_prime2, H_orig2, H_target2 = subspace_editing_by_state(
-     x1[x1 % 2 == 1], x2[x2 % 2 == 0], train_activity, Q, n_samples, key4)
+     x1[x1 % 2 == 1], 
+     x2[x2 % 2 == 0], 
+     test_states_vec, 
+     test_activity, 
+     Q, 
+     n_samples, 
+     key4)
 
 fig, axes = plt.subplots(3, 2, figsize=(6,4))
 plot_next_token_prediction(
@@ -285,7 +422,13 @@ fig.tight_layout()
 from sklearn.cluster import KMeans
 
 H_prime1, H_orig1, H_target1 = subspace_editing_by_state(
-     x1[x1 % 2 == 0], x1[x1 % 2 == 1], train_activity, Q, n_samples, key1)
+     x1[x1 % 2 == 1], 
+     x1[x1 % 2 == 0], 
+     test_states_vec, 
+     test_activity, 
+     Q, 
+     n_samples, 
+     key3)
 
 target_probs = jax.nn.softmax(jax.vmap(readout)(H_prime1))
 
