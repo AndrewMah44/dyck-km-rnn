@@ -111,9 +111,7 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
         model, 
         validation_x, 
         validation_y, 
-        validation_mask,
-        jr.PRNGKey(1),
-        inference=True)
+        validation_mask)
 
     print(f"Initial Validaiton Loss: {initial_validation_loss:0.4f}")
 
@@ -128,7 +126,7 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
 
     while counter < config['training']['max_counter']:
         epoch_start_time = time.time()
-        batch_key, length_key, step_key = jr.split(training_key, 3)
+        batch_key, length_key = jr.split(training_key, 2)
 
         # Sequence lengths
         epoch_lengths = powerlaw(
@@ -156,8 +154,7 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
             epoch_y,
             epoch_mask,
             opt_state, 
-            optimizer,
-            step_key)
+            optimizer)
 
         training_loss_history.append(loss_history)
 
@@ -165,9 +162,7 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
             model, 
             validation_x, 
             validation_y, 
-            validation_mask,
-            jr.PRNGKey(1),
-            inference=True)
+            validation_mask)
         
         validation_loss_history.append(epoch_validation_loss)
         
@@ -194,7 +189,7 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
             + f"{epoch_validation_loss} " \
             + f"(counter = {counter})", flush=True)
         
-        _, training_key = jr.split(step_key, 2)
+        _, training_key = jr.split(length_key, 2)
 
         save_model(model, checkpoint_dir / f'checkpoint_{epoch:02d}')
         epoch += 1
