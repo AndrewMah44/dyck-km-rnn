@@ -10,8 +10,11 @@ src/dyck_rnn/data/samplers.py
 src/dyck_rnn/data/save_model.py
 src/dyck_rnn/models/__init__.py
 src/dyck_rnn/models/rnn.py
+src/dyck_rnn/models/transformer.py
 src/dyck_rnn/training/__init__.py
 src/dyck_rnn/training/epochs.py
 src/dyck_rnn/training/evals.py
 src/dyck_rnn/training/losses.py
 src/dyck_rnn/training/steps.py
+src/dyck_rnn/training/train.py
+src/dyck_rnn/utils/get_depth.py
