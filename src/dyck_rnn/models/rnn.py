@@ -81,7 +81,7 @@ class LinearRecurrentCell(eqx.Module):
         self.W_u = init_scale * jr.orthogonal(in_key, hidden_size)
         self.W_rec = jax.random.normal(
             rec_key, 
-            (hidden_size, hidden_size)) * (1/jnp.sqrt(hidden_size))
+            (hidden_size, hidden_size)) * (1 / hidden_size)
 
     def __call__(self, inp, hidden):
         """
@@ -217,7 +217,7 @@ class RecurrentSequenceModel(eqx.Module):
             key = readout_key)
         
     # include key and inference inputs to make compatible with transformers...
-    def __call__(self, inputs, key=None, inference=None):
+    def __call__(self, inputs):
         h = self.rnn(inputs)
 
         return jax.vmap(self.readout)(h)
