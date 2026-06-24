@@ -87,25 +87,13 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
             rnn_scale = config['model']['init_scale'],
             key = model_key)
 
-        def loss_func(model, obs, next_obs, mask, key, inference=False):
-            keys = jr.split(key, obs.shape[0])
+
+        def loss_func(model, obs, next_obs, mask):
             pred_loss = jax.vmap(pred_loss_func, 
-                                in_axes=[None, 0, 0, 0, 0, None])(
-                                model, obs, next_obs, mask, keys, inference)
+                                in_axes=[None, 0, 0, 0])(
+                                model, obs, next_obs, mask)
 
             return pred_loss.mean()
-    
-    elif config['model']['model_class'].lower() == 'transformer':
-        model = TinyTransformer(
-            vocab_size = 2 * config['data']['k'] + 2, 
-            num_blocks = config['model']['num_blocks'], 
-            num_heads = config['model']['num_heads'],
-            embedding_dim = config['model']['embedding_dim'], 
-            hidden_dim = config['model']['hidden_dim'],
-            max_length = config['model']['max_length'],        # 450 by default
-            key = model_key)
-        
-        loss_func = pred_loss_func
 
     else:
         raise ValueError(
