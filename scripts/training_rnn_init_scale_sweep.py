@@ -25,7 +25,7 @@ n_runs = sweep_config['experiment']['n_runs']
 seed = sweep_config['experiment']['seed']
 
 if "comment" in sweep_config['experiment']:
-    comment = sweep_config['experiment']['comment']
+    comment = "_" + sweep_config['experiment']['comment']
 else:
     comment = ""
 
@@ -47,7 +47,7 @@ sweep_name = task \
     + f"_{sweep_config['model']['cell_type'].lower()}" \
     + f"_h{sweep_config['model']['hidden_size']}" \
     + f"_mlp{sweep_config['model']['readout_depth']}" \
-    + "_InitScaleSweep_" \
+    + "_InitScaleSweep" \
     + comment
 
 print(f"Fitting {sweep_name}...")
