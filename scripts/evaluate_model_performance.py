@@ -94,11 +94,11 @@ def get_close_conditional_prob(model_probs, seqs, k):
 run_name = "DyckKM_k02_m04_linear_h24_mlp1"
 run = 0
 
-# ==== Load Linear Model ====
-model_dir = "/Users/amah/Documents/GitHub/dyck-km-rnn/runs/"
+model_dir = "/Users/amah/Documents/GitHub/dyck-km-rnn/runs/old2"
 run_dir = Path("/Users/amah/Documents/GitHub/dyck-km-rnn/runs/") \
     / run_name / f"run_{run:02}"
 
+# ==== Load Linear Model ====
 with open(run_dir / "config.yaml", "r") as file:
     model_config = yaml.safe_load(file)
 
@@ -112,7 +112,7 @@ data_key, length_key, sample_key = jr.split(master_key,3)
 
 k = model_config['data']['k']
 m = model_config['data']['m']
-max_length = 100*(4 * m * (m + 4))
+max_length = 50*(4 * m * (m + 4))
 
 DyckHMM = dyck_hmm(k, m)
 
@@ -142,8 +142,9 @@ ages = jax.vmap(close_ages, in_axes=[0,0,None,None])(
     sequences, states, num_states, k)
 ages = ages[(sequences >= k) & (sequences < 2*k)]
 
-#%%
 # ==== Plots ====
+fig, ax = plt.subplots(3, 1)
+
 # Confidence histogram
 ax[0].hist(conditional_prob)
 
