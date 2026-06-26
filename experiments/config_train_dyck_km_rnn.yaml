@@ -1,8 +1,7 @@
 experiment: 
   task: "DyckKM"
   seed: 324
-  n_runs: 3
-  comment: "2"
+  n_runs: 5
 
 # Remove max length - depends on k. Relationship is in train.py
 data:
@@ -13,9 +12,10 @@ data:
 # Remove hidden size - depends on k and m. Relationship is in train.py
 model:
   model_class: 'Recurrent'
-  cell_type: 'linear'
-  readout_depth : 1
-  init_scale: 0.16
+  cell_type: 'gru'
+  readout_depth : 0
+  init_scale: 0.2
+  hidden_size: 24
 
 optimizer:
   name: adam
