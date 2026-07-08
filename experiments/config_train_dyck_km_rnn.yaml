@@ -12,10 +12,9 @@ data:
 # Remove hidden size - depends on k and m. Relationship is in train.py
 model:
   model_class: 'Recurrent'
-  cell_type: 'gru'
-  readout_depth : 0
+  cell_type: 'linear'
+  readout_depth : 2
   init_scale: 0.2
-  hidden_size: 24
 
 optimizer:
   name: adam
