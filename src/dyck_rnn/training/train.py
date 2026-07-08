@@ -101,10 +101,20 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
 
     # ==== Optimization setup ====
     learning_rate = config['optimizer']['learning_rate']
-    optimizer = optax.chain(
-        optax.clip_by_global_norm(1.0),  # Gradient norm clipping
-        optax.adam(learning_rate=learning_rate)
-        )
+    if config['optimizer']['name'].lower() == 'adam':
+        optimizer = optax.chain(
+            optax.clip_by_global_norm(1.0),  # Gradient norm clipping
+            optax.adam(learning_rate=learning_rate)
+            )
+    elif config['optimizer']['name'].lower() == 'adamw':
+         optimizer = optax.chain(
+            optax.clip_by_global_norm(1.0),  # Gradient norm clipping
+            optax.adamw(learning_rate=learning_rate)
+            )      
+    else:
+        raise ValueError(
+            f"{config['optimizer']['name']} is not a valid optimizer")
+    
     opt_state = optimizer.init(eqx.filter(model, eqx.is_inexact_array))
 
     initial_validation_loss = loss_func(
@@ -170,11 +180,22 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
             # Decrement learning rate
             learning_rate *= 0.5
 
-            # Re-initalize the optimizer and opt_state
-            optimizer = optax.chain(
-                optax.clip_by_global_norm(1.0),  # Gradient norm clipping
-                optax.adam(learning_rate=learning_rate)
-            )
+            # # Re-initalize the optimizer and opt_state
+            # optimizer = optax.chain(
+            #     optax.clip_by_global_norm(1.0),  # Gradient norm clipping
+            #     optax.adam(learning_rate=learning_rate)
+            # )
+
+            if config['optimizer']['name'].lower() == 'adam':
+                optimizer = optax.chain(
+                    optax.clip_by_global_norm(1.0),  # Gradient norm clipping
+                    optax.adam(learning_rate=learning_rate)
+                    )
+            elif config['optimizer']['name'].lower() == 'adamw':
+                optimizer = optax.chain(
+                    optax.clip_by_global_norm(1.0),  # Gradient norm clipping
+                    optax.adamw(learning_rate=learning_rate)
+                    )      
 
             # Increment counter
             counter += 1
