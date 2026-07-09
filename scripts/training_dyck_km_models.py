@@ -12,10 +12,14 @@ from dyck_rnn.training.train import train_dyck_rnn
 # ====== Load Configuration File ======
 parser = argparse.ArgumentParser()
 parser.add_argument("--config", type=Path, required=True)
+parser.add_argument("--r", type=int, default=0)
+
 args = parser.parse_args()
 
 with args.config.open("r") as f:
     config = yaml.safe_load(f)
+
+run = args.r
 
 # ====== Set Up Run Name ======
 k = config['data']['k']
@@ -51,10 +55,9 @@ if config['model']['model_class'].lower() == 'recurrent':
 else:
     raise ValueError(f"{config['model']['model_class']} is not valid class")
         
-for run in range(n_runs):
-    run_name = name + f'run_{run:02}'
-    run_config = deepcopy(config)
-    run_config['experiment']['seed'] = seed + run
+run_name = name + f'run_{run:02}'
+run_config = deepcopy(config)
+run_config['experiment']['seed'] = seed + run
 
-    train_dyck_rnn(run_name, run_config)
+train_dyck_rnn(run_name, run_config)
 
