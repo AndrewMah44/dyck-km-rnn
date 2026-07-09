@@ -2,9 +2,9 @@
 import jax
 jax.config.update("jax_enable_x64", True)
 
+import math
 import yaml
 import argparse
-import jax.numpy as jnp
 from pathlib import Path
 from copy import deepcopy
 from dyck_rnn.training.train import train_dyck_rnn
@@ -32,10 +32,10 @@ seed = config['experiment']['seed']
 # GRU is to match number of linear params
 if 'hidden_size' not in config['model']:
     if config['model']['cell_type'].lower() == 'linear':
-        config['model']['hidden_size'] = int(jnp.ceil(6 * m * jnp.log2(k)))
+        config['model']['hidden_size'] = math.ceil(6 * m * math.log2(k))
 
     elif config['model']['cell_type'].lower() in ['lstm', 'gru']:
-        config['model']['hidden_size'] = int(jnp.ceil(3 * m * jnp.log2(k)))
+        config['model']['hidden_size'] = math.ceil(3 * m * math.log2(k))
 
 if config['model']['model_class'].lower() == 'recurrent':
     if 'comment' in config['experiment']:
