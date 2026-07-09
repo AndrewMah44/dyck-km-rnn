@@ -7,11 +7,11 @@ import yaml
 import optax
 import socket
 import equinox as eqx
+import jax.numpy as jnp
 import jax.random as jr
 from pathlib import Path
 from optax import adam, adamw
 from datetime import datetime
-
 from dyck_rnn.data.dyck_hmm import dyck_hmm
 from dyck_rnn.data.samplers import powerlaw
 from dyck_rnn.data.save_model import save_model
@@ -126,6 +126,9 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
     print(f"Initial Validaiton Loss: {initial_validation_loss:0.4f}")
 
     # ==== Initalize Metrics ====
+    initial_validation_loss = float(jax.device_get(initial_validation_loss))
+    validation_loss_history = [initial_validation_loss]
+
     validation_loss_history = [initial_validation_loss]
     training_loss_history = []
 
@@ -166,25 +169,22 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
             opt_state, 
             optimizer)
 
-        training_loss_history.append(loss_history)
-
+        training_loss_history.append(
+            float(jax.device_get(jnp.mean(loss_history)))
+        )
+        
         epoch_validation_loss = loss_func(
             model, 
             validation_x, 
             validation_y, 
             validation_mask)
         
+        epoch_validation_loss = float(jax.device_get(epoch_validation_loss))
         validation_loss_history.append(epoch_validation_loss)
         
         if epoch_validation_loss > min(validation_loss_history):
             # Decrement learning rate
             learning_rate *= 0.5
-
-            # # Re-initalize the optimizer and opt_state
-            # optimizer = optax.chain(
-            #     optax.clip_by_global_norm(1.0),  # Gradient norm clipping
-            #     optax.adam(learning_rate=learning_rate)
-            # )
 
             if config['optimizer']['name'].lower() == 'adam':
                 optimizer = optax.chain(
