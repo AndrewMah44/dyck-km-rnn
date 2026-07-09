@@ -4,7 +4,6 @@
 #SBATCH --output=logs/dyck_%A_%a.out
 #SBATCH --error=logs/dyck_%A_%a.err
 #SBATCH --array=1
-#SBATCH --gpus-per-task=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=15G                 # Adjust memory as needed
 #SBATCH --time=5:00:00            # Max runtime
