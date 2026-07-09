@@ -8,8 +8,7 @@
 #SBATCH --time=5:00:00
 #SBATCH --mail-type=END,FAIL,ARRAY_TASKS
 #SBATCH --mail-user=amah@flatironinstitute.org
-#SBATCH --partition=genx
-#SBATCH --gres=gpu:1
+#SBATCH --gpus=1
 
 module --force purge
 # module load python   # comment this out unless you know the correct module name
