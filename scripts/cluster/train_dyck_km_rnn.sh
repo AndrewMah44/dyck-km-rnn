@@ -9,7 +9,6 @@
 #SBATCH --time=5:00:00            # Max runtime
 #SBATCH --mail-type=END,FAIL,ARRAY_TASKS
 #SBATCH --mail-user=amah@flatironinstitute.org  # Or your actual email
-#SBATCH --partition=genx
 
 # Load your environment
 module --force purge
