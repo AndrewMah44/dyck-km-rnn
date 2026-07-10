@@ -60,11 +60,36 @@ with (full_run_dir / "sweep_config.yaml").open("w") as f:
     yaml.safe_dump(sweep_config, f)
 
 # ====== Sweep over initial scale ======
-for init_scale in sweep_config['sweep']['init_scale']:
-    print(init_scale)
+min_scale = sweep_config['sweep']['min_scale']
+max_scale = sweep_config['sweep']['max_scale']
+n_scales = sweep_config['sweep']['n_scales']
 
-    run_config = deepcopy(sweep_config)
-    run_config['model']['init_scale'] = init_scale
+for run in range(3):
+    init_scales = jnp.linspace(min_scale, max_scale, n_scales)
 
-    run_name = f"fit_{init_scale}"
-    train_dyck_rnn(run_name, run_config, run_parent=full_run_dir)
+    print("")
+    print(init_scales)
+    print("")
+
+    final_validation_loss = jnp.zeros(n_scales)
+    for i, init_scale in enumerate(init_scales):
+        run_config = deepcopy(sweep_config)
+        run_config['model']['init_scale'] = init_scale.item()
+
+        run_name = f"fit_{run:02}_{i:02}"
+        loss = train_dyck_rnn(run_name, run_config, run_parent=full_run_dir)
+
+        final_validation_loss = final_validation_loss.at[i].set(loss)
+
+    best_idx = jnp.argmin(final_validation_loss)
+
+    min_scale = init_scales[max(best_idx-1, 0)]
+    max_scale = init_scales[min(best_idx+1, n_scales-1)]
+
+# for init_scale in sweep_config['sweep']['init_scale']:
+#     print(init_scale)
+
+
+
+#    
+#     
