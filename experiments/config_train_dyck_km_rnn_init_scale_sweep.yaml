@@ -25,14 +25,10 @@ optimizer:
   learning_rate: 1.0e-3
 
 training:
-  validation_size: 1024
-  batch_size: 16
-  batches_per_epoch: 32
-  max_counter: 1
-  # validation_size: 32768
-  # batch_size: 128
-  # batches_per_epoch: 8192
-  # max_counter: 3
+  validation_size: 32768
+  batch_size: 128
+  batches_per_epoch: 8192
+  max_counter: 3
 
 checkpointing:
   save_dir: checkpoints/
