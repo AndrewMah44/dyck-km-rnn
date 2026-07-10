@@ -14,6 +14,7 @@
 module --force purge
 # module load python   # comment this out unless you know the correct module name
 source ~/venvs/dyck_rnn/bin/activate
+# export JAX_PLATFORMS=cpu
 
 python3 scripts/training_dyck_km_models.py \
   --config experiments/config_train_dyck_km_rnn.yaml \
