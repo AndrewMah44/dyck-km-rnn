@@ -30,7 +30,7 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
         print(f"Skipping completed run {run_name}")
         return
     
-    print(f"Fitting {run_name}...")
+    print(f"Fitting {run_name}...", flush=True)
     
     run_dir.mkdir(parents=True, exist_ok=True)
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
@@ -123,7 +123,8 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
         validation_y, 
         validation_mask)
 
-    print(f"Initial Validaiton Loss: {initial_validation_loss:0.4f}")
+    print(f"Initial Validaiton Loss: {initial_validation_loss:0.4f}",
+          flush=True)
 
     # ==== Initalize Metrics ====
     initial_validation_loss = float(jax.device_get(initial_validation_loss))
