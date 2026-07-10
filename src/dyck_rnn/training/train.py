@@ -130,7 +130,6 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
     initial_validation_loss = float(jax.device_get(initial_validation_loss))
     validation_loss_history = [initial_validation_loss]
 
-    validation_loss_history = [initial_validation_loss]
     training_loss_history = []
 
     # ==== Training Loop ====
@@ -171,7 +170,7 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
             optimizer)
 
         training_loss_history.append(
-            float(jax.device_get(jnp.mean(loss_history)))
+            jax.device_get(loss_history)
         )
         
         epoch_validation_loss = loss_func(
@@ -250,3 +249,5 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
     # Save config
     with (run_dir / "config.yaml").open("w") as f:
         yaml.safe_dump(config, f)
+
+    return validation_loss_history[-1]
