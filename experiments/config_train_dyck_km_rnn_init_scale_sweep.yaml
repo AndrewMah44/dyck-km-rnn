@@ -4,12 +4,13 @@ experiment:
   n_runs: 1
 
 sweep:
-  init_scale: [0.01 , 0.035, 0.06 , 0.085, 0.11 , 0.135, 0.16 , 0.185, 0.21 ,
-       0.235, 0.26 , 0.285, 0.3]
+  min_scale: 0
+  max_scale: 1
+  n_scales: 10
 
 # Remove max length - depends on k. Relationship is in train.py
 data:
-  k: 2
+  k: 4
   m: 4
   alpha: 0.9
 
@@ -24,10 +25,14 @@ optimizer:
   learning_rate: 1.0e-3
 
 training:
-  validation_size: 32768
-  batch_size: 128
-  batches_per_epoch: 8192
-  max_counter: 3
+  validation_size: 1024
+  batch_size: 16
+  batches_per_epoch: 32
+  max_counter: 1
+  # validation_size: 32768
+  # batch_size: 128
+  # batches_per_epoch: 8192
+  # max_counter: 3
 
 checkpointing:
   save_dir: checkpoints/
