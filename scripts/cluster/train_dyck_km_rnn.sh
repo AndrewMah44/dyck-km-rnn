@@ -2,7 +2,7 @@
 #SBATCH --job-name=dyck
 #SBATCH --output=logs/dyck_%A_%a.out
 #SBATCH --error=logs/dyck_%A_%a.err
-#SBATCH --array=1-4
+#SBATCH --array=4
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=4
