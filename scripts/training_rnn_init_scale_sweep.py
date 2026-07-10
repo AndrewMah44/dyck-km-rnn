@@ -67,11 +67,8 @@ n_scales = sweep_config['sweep']['n_scales']
 for run in range(3):
     init_scales = jnp.linspace(min_scale, max_scale, n_scales)
 
-    print("")
-    print(init_scales)
-    print("")
-
     final_validation_loss = jnp.zeros(n_scales)
+    
     for i, init_scale in enumerate(init_scales):
         run_config = deepcopy(sweep_config)
         run_config['model']['init_scale'] = init_scale.item()
@@ -85,11 +82,3 @@ for run in range(3):
 
     min_scale = init_scales[max(best_idx-1, 0)]
     max_scale = init_scales[min(best_idx+1, n_scales-1)]
-
-# for init_scale in sweep_config['sweep']['init_scale']:
-#     print(init_scale)
-
-
-
-#    
-#     
