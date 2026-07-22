@@ -6,7 +6,7 @@ experiment:
 # Remove max length - depends on k. Relationship is in train.py
 data:
   k: 2
-  m: 8
+  m: 4
   alpha: 0.9
 
 # Remove hidden size - depends on k and m. Relationship is in train.py
@@ -19,6 +19,8 @@ model:
 optimizer:
   name: adam
   learning_rate: 1.0e-3
+  regularizer: 'svd'
+  lambda: 1.0e-4
 
 training:
   validation_size: 32768
