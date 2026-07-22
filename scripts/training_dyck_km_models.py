@@ -37,23 +37,18 @@ if 'hidden_size' not in config['model']:
     elif config['model']['cell_type'].lower() in ['lstm', 'gru']:
         config['model']['hidden_size'] = math.ceil(3 * m * math.log2(k))
 
-if config['model']['model_class'].lower() == 'recurrent':
-    if 'comment' in config['experiment']:
-        name = task \
-            + f"_k{k:02}_m{m:02}" \
-            + f"_{config['model']['cell_type']}" \
-            + f"_h{config['model']['hidden_size']}" \
-            + f"_mlp{config['model']['readout_depth']}" \
-            + f"_{config['experiment']['comment']}/"
-    else:
-        name = task \
-            + f"_k{k:02}_m{m:02}" \
-            + f"_{config['model']['cell_type']}" \
-            + f"_h{config['model']['hidden_size']}" \
-            + f"_mlp{config['model']['readout_depth']}/" \
-        
-else:
-    raise ValueError(f"{config['model']['model_class']} is not valid class")
+name = task \
+    + f"_k{k:02}_m{m:02}" \
+    + f"_{config['model']['cell_type']}" \
+    + f"_h{config['model']['hidden_size']}" \
+    + f"_mlp{config['model']['readout_depth']}"
+
+if 'lambda' in config['optimizer']:
+     name += f"_{config['optimizer']['regularizer']}/"
+
+if 'comment' in config['experiment']:
+        name += f"_{config['experiment']['comment']}/"
+
         
 run_name = name + f'run_{run:02}'
 run_config = deepcopy(config)
