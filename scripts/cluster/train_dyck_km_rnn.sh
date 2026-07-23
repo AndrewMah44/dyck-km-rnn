@@ -2,13 +2,13 @@
 #SBATCH --job-name=dyck
 #SBATCH --output=logs/dyck_%A_%a.out
 #SBATCH --error=logs/dyck_%A_%a.err
-#SBATCH --array=4
+#SBATCH --array=5-9
 #SBATCH --partition=gpu
 #SBATCH --gpus-per-task=1
 #SBATCH --constraint=a100
 #SBATCH --cpus-per-task=16
 #SBATCH --ntasks=1
-#SBATCH --mem=15G
+#SBATCH --mem=5G
 #SBATCH --time=5:00:00
 #SBATCH --mail-type=END,FAIL,ARRAY_TASKS
 #SBATCH --mail-user=amah@flatironinstitute.org
