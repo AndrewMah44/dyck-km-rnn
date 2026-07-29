@@ -1,3 +1,4 @@
+#%%
 import jax
 jax.config.update("jax_enable_x64", True)
 
@@ -18,7 +19,6 @@ from dyck_rnn.data.save_model import save_model
 from dyck_rnn.training.losses import pred_loss_func
 from dyck_rnn.training.epochs import train_one_epoch
 from dyck_rnn.models.rnn import RecurrentSequenceModel
-from dyck_rnn.models.transformer import TinyTransformer
 
 def train_dyck_rnn(run_name, config, run_parent="runs"):
     # ====== Set Up Directory ======
@@ -109,14 +109,21 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
 
                 return pred_loss.mean()
         elif config['optimizer']['regularizer'].lower() == 'svd':
+            # Precompute I
+            I = jnp.eye(model.rnn.hidden_size)
+
+            # Empirically, average input ubar is uniform over token pairs
+            ubar = jnp.zeros(2*k + 2).at[:2*k].set(1/(2*k))
+            
             def loss_func(model, obs, next_obs, mask):
                 pred_loss = jax.vmap(pred_loss_func, 
                         in_axes=[None, 0, 0, 0])(
                         model, obs, next_obs, mask).mean()
-                            
-                U, S, _ = jnp.linalg.svd(model.rnn.rnn.W_rec)
+
+
+                U, S, _ = jnp.linalg.svd(I - model.rnn.rnn.W_rec)
                 B = model.rnn.rnn.W_u @ model.rnn.Win.weight.T
-                svd_loss = jnp.mean(((U @ B).sum(1) / S)**2)
+                svd_loss = jnp.sum(((U @ B @ ubar) / S)**2)
 
                 return pred_loss + config['optimizer']['lambda'] * svd_loss
 
@@ -271,3 +278,4 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
         yaml.safe_dump(config, f)
 
     return validation_loss_history[-1]
+# %%
