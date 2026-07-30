@@ -44,13 +44,13 @@ name = task \
     + f"_mlp{config['model']['readout_depth']}"
 
 if 'lambda' in config['optimizer']:
-     name += f"_{config['optimizer']['regularizer']}/"
+     name += f"_{config['optimizer']['regularizer']}" +\
+        f"{config['optimizer']['lambda']:0.2f}"
 
 if 'comment' in config['experiment']:
-        name += f"_{config['experiment']['comment']}/"
-
+        name += f"_{config['experiment']['comment']}"
         
-run_name = name + f'run_{run:02}'
+run_name = name + f'/run_{run:02}'
 run_config = deepcopy(config)
 run_config['experiment']['seed'] = seed + run
 
