@@ -114,7 +114,7 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
 
             # Empirically, average input ubar is uniform over token pairs
             ubar = jnp.zeros(2*k + 2).at[:2*k].set(1/(2*k))
-            
+
             def loss_func(model, obs, next_obs, mask):
                 pred_loss = jax.vmap(pred_loss_func, 
                         in_axes=[None, 0, 0, 0])(
@@ -123,7 +123,7 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
 
                 U, S, _ = jnp.linalg.svd(I - model.rnn.rnn.W_rec)
                 B = model.rnn.rnn.W_u @ model.rnn.Win.weight.T
-                svd_loss = jnp.sum(((U @ B @ ubar) / S)**2)
+                svd_loss = jnp.sum(((U.T @ B @ ubar) / S)**2)
 
                 return pred_loss + config['optimizer']['lambda'] * svd_loss
 
