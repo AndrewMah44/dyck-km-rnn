@@ -1,7 +1,8 @@
 experiment: 
-  task: "DyckKM"
+  task: 'DyckKM'
   seed: 324
   n_runs: 1
+  comment: 'fixed_u_transpose'
 
 sweep:
   min_scale: 0
