@@ -1,5 +1,6 @@
 experiment: 
   task: "DyckKM"
+  comment: "fixed_u_tranpose"
   seed: 1114
   n_runs: 10
 
@@ -20,8 +21,7 @@ optimizer:
   name: adam
   learning_rate: 1.0e-3
   regularizer: 'svd'
-  lambda: 0.5
-# lambda: 0.2866941
+lambda: 0.2866941
 
 training:
   validation_size: 32768
