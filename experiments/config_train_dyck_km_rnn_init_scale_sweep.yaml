@@ -10,7 +10,7 @@ sweep:
 
 # Remove max length - depends on k. Relationship is in train.py
 data:
-  k: 4
+  k: 8
   m: 4
   alpha: 0.9
 
