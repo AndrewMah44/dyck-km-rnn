@@ -2,7 +2,7 @@ experiment:
   task: 'DyckKM'
   seed: 324
   n_runs: 1
-  comment: 'remove_s_scaling'
+  comment: 'remove_s_scaling2'
 
 sweep:
   min_scale: 0
