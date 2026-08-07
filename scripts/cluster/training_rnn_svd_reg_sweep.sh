@@ -1,7 +1,7 @@
 #!/usr/bin/bash
-#SBATCH --job-name=rnn_init
-#SBATCH --output=logs/lam_%A_%a.out
-#SBATCH --error=logs/lam_%A_%a.err
+#SBATCH --job-name=svd_reg
+#SBATCH --output=logs/svd_reg_%A.out
+#SBATCH --error=logs/svd_reg_%A.err
 #SBATCH --partition=gpu
 #SBATCH --gpus-per-task=1
 #SBATCH --constraint=a100
