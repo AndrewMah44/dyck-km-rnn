@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 #SBATCH --job-name=rnn_init
-#SBATCH --output=logs/rnn_init_%A_%a.out
-#SBATCH --error=logs/rnn_init_%A_%a.err
+#SBATCH --output=logs/rnn_init_%A.out
+#SBATCH --error=logs/rnn_init_%A.err
 #SBATCH --partition=gpu
 #SBATCH --gpus-per-task=1
 #SBATCH --constraint=a100
