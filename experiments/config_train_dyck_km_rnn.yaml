@@ -1,6 +1,6 @@
 experiment: 
   task: "DyckKM"
-  comment: "remove_s_scaling"
+  comment: "remove_s_scaling2"
   seed: 1114
   n_runs: 10
 
