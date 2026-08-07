@@ -1,6 +1,6 @@
 experiment: 
   task: "DyckKM"
-  comment: "fixed_u_tranpose"
+  comment: "remove_s_scaling"
   seed: 1114
   n_runs: 10
 

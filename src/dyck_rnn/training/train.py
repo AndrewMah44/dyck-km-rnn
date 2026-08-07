@@ -123,7 +123,10 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
 
                 U, S, _ = jnp.linalg.svd(I - model.rnn.rnn.W_rec)
                 B = model.rnn.rnn.W_u @ model.rnn.Win.weight.T
-                svd_loss = jnp.sum(((U.T @ B @ ubar) / S)**2)
+                # svd_loss = jnp.sum(((U.T @ B @ ubar) / S)**2) 
+
+                # Test 1: Removing scaling by singular values
+                svd_loss = jnp.sum(((U.T @ B @ ubar))**2)
 
                 return pred_loss + config['optimizer']['lambda'] * svd_loss
 
