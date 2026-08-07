@@ -21,7 +21,7 @@ optimizer:
   name: adam
   learning_rate: 1.0e-3
   regularizer: 'svd'
-  lambda: 0.13580246913580246
+  lambda: 0.05
 
 training:
   validation_size: 32768
