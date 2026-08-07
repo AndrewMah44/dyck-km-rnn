@@ -1,11 +1,11 @@
 #!/usr/bin/bash
 #SBATCH --job-name=rnn_init
-#SBATCH --output=logs/rnn_init_%A.out
-#SBATCH --error=logs/rnn_init_%A.err
+#SBATCH --output=logs/lam_%A_%a.out
+#SBATCH --error=logs/lam_%A_%a.err
 #SBATCH --partition=gpu
 #SBATCH --gpus-per-task=1
 #SBATCH --constraint=a100
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=1
 #SBATCH --ntasks=1
 #SBATCH --mem=15G
 #SBATCH --time=10:00:00
