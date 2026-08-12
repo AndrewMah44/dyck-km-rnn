@@ -128,7 +128,10 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
 
                 # svd_loss = jnp.sum(((U.T @ B @ ubar) / S)**2) 
                 # Test 1: Removing scaling by singular values
-                svd_loss = jnp.sum(((U.T @ c))**2)
+                # svd_loss = jnp.sum(((U.T @ c))**2)
+
+                # Test 2: Try only penalizing the first singular vector
+                svd_loss = ((U[:,0].T @ B @ ubar) / S[0])**2
 
                 return pred_loss + config['optimizer']['lambda'] * svd_loss
 
