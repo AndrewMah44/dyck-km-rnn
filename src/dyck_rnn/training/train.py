@@ -60,7 +60,7 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
     validation_lengths = powerlaw(
         length_key, 
         15, 
-        config['data']['max_length'], 
+        4*config['data']['max_length'], 
         config['data']['alpha'], 
         shape=(config['training']['validation_size'],)
     )   #min length of 15 ensures unlikely to overlap with training data

@@ -1,6 +1,6 @@
 experiment: 
   task: "DyckKM"
-  comment: "rmv_first_sing_vec"
+  comment: "rmv_first_sing_vec_longer_validation"
   seed: 1114
   n_runs: 10
 
