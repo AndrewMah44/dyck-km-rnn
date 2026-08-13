@@ -2,11 +2,11 @@ experiment:
   task: 'DyckKM'
   seed: 324
   n_runs: 1
-  comment: 'rmv_first_sing_vec'
+  comment: 'rmv_first_sing_vec_bigger_range'
 
 sweep:
   min_scale: 0
-  max_scale: 20
+  max_scale: 50
   n_scales: 10
 
 # Remove max length - depends on k. Relationship is in train.py
