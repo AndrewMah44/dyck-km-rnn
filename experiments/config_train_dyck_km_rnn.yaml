@@ -1,6 +1,6 @@
 experiment: 
   task: "DyckKM"
-  comment: "rmv_first_sing_vec_longer_validation"
+  comment: "rmv_first_sing_vec"
   seed: 1114
   n_runs: 10
 
@@ -21,7 +21,7 @@ optimizer:
   name: adam
   learning_rate: 1.0e-3
   regularizer: 'svd'
-  lambda: 5
+  lambda: 8.14
 
 training:
   validation_size: 32768
