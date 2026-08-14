@@ -1,8 +1,6 @@
 experiment: 
   task: "DyckKM"
-  comment: "rmv_first_sing_vec"
   seed: 1114
-  n_runs: 10
 
 # Remove max length - depends on k. Relationship is in train.py
 data:
@@ -20,8 +18,7 @@ model:
 optimizer:
   name: adam
   learning_rate: 1.0e-3
-  regularizer: 'svd'
-  lambda: 8.14
+  regularizer: 'standard'
 
 training:
   validation_size: 32768
