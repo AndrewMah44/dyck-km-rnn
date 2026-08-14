@@ -25,7 +25,6 @@ run = args.r
 k = config['data']['k']
 m = config['data']['m']
 task = config['experiment']['task']
-n_runs = config['experiment']['n_runs']
 seed = config['experiment']['seed']
 
 # Linear and LSTM hidden sizes are based on Hewitt. 
