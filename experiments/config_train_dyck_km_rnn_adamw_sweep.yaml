@@ -1,7 +1,12 @@
 experiment: 
-  task: "DyckKM"
-  seed: 1114
-  comment: "adamw"
+  task: 'DyckKM'
+  seed: 324
+  n_runs: 1
+
+sweep:
+  min_scale: -5
+  max_scale: 0
+  n_scales: 10
 
 # Remove max length - depends on k. Relationship is in train.py
 data:
@@ -15,12 +20,12 @@ model:
   cell_type: 'linear'
   readout_depth : 1
   init_scale: 0.2
-
+  
 optimizer:
   name: adamw
   learning_rate: 1.0e-3
   regularizer: 'standard'
-  weight_decay: 0.001
+
 
 training:
   validation_size: 32768

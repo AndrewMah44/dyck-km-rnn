@@ -142,10 +142,17 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
             optax.adam(learning_rate=learning_rate)
             )
     elif config['optimizer']['name'].lower() == 'adamw':
-         optimizer = optax.chain(
+        if 'weight_decay' in config['optimizer']:
+            weight_decay = config['optimizer']['weight_decay']
+        else:
+            weight_decay = 1e-3
+    
+        optimizer = optax.chain(
             optax.clip_by_global_norm(1.0),  # Gradient norm clipping
-            optax.adamw(learning_rate=learning_rate)
-            )      
+            optax.adamw(learning_rate=learning_rate, 
+                        weight_decay=weight_decay)
+        )      
+
     else:
         raise ValueError(
             f"{config['optimizer']['name']} is not a valid optimizer")
@@ -226,11 +233,18 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
                     optax.clip_by_global_norm(1.0),  # Gradient norm clipping
                     optax.adam(learning_rate=learning_rate)
                     )
+                
             elif config['optimizer']['name'].lower() == 'adamw':
+                if 'weight_decay' in config['optimizer']:
+                    weight_decay = config['optimizer']['weight_decay']
+                else:
+                    weight_decay = 1e-3
+            
                 optimizer = optax.chain(
                     optax.clip_by_global_norm(1.0),  # Gradient norm clipping
-                    optax.adamw(learning_rate=learning_rate)
-                    )      
+                    optax.adamw(learning_rate=learning_rate, 
+                                weight_decay=weight_decay)
+                )    
 
             # Increment counter
             counter += 1
