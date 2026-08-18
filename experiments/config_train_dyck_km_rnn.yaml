@@ -1,7 +1,6 @@
 experiment: 
   task: "DyckKM"
   seed: 1114
-  comment: "adamw"
 
 # Remove max length - depends on k. Relationship is in train.py
 data:
@@ -17,10 +16,9 @@ model:
   init_scale: 0.2
 
 optimizer:
-  name: adamw
+  name: adam
   learning_rate: 1.0e-3
   regularizer: 'standard'
-  weight_decay: 0.001
 
 training:
   validation_size: 32768
