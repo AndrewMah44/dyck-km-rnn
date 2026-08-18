@@ -2,10 +2,9 @@
 #SBATCH --job-name=dyck
 #SBATCH --output=logs/dyck_%A_%a.out
 #SBATCH --error=logs/dyck_%A_%a.err
-#SBATCH --array=51-99
+#SBATCH --array=51
 #SBATCH --partition=gpu
 #SBATCH --gpus-per-task=1
-#SBATCH --constraint=a100
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks=1
 #SBATCH --mem=5G
