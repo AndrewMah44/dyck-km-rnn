@@ -92,49 +92,21 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
             f"Invalid model class: {config['model']['model_class']}")
 
     # ==== Optimization setup ====
-    if 'regularizer' not in config['optimizer']:
-        def loss_func(model, obs, next_obs, mask):
-            pred_loss = jax.vmap(pred_loss_func, 
-                                in_axes=[None, 0, 0, 0])(
-                                model, obs, next_obs, mask)
-
-            return pred_loss.mean()
-
+    # Whether to enforce stable W_rec by rescaling
+    if 'enforce_stable' in config['optimizer']:
+        enforce_stable = config['optimizer']['enforce_stable']
     else:
-        if config['optimizer']['regularizer'].lower() == 'standard':
-            def loss_func(model, obs, next_obs, mask):
-                pred_loss = jax.vmap(pred_loss_func, 
-                                    in_axes=[None, 0, 0, 0])(
-                                    model, obs, next_obs, mask)
+        enforce_stable = False
 
-                return pred_loss.mean()
-        elif config['optimizer']['regularizer'].lower() == 'svd':
-            # Precompute I
-            I = jnp.eye(model.rnn.hidden_size)
+    # Define loss function
+    def loss_func(model, obs, next_obs, mask):
+        pred_loss = jax.vmap(pred_loss_func, 
+                            in_axes=[None, 0, 0, 0])(
+                            model, obs, next_obs, mask)
 
-            # Empirically, average input ubar is uniform over token pairs
-            ubar = jnp.zeros(2*k + 2).at[:2*k].set(1/(2*k))
+        return pred_loss.mean()
 
-            def loss_func(model, obs, next_obs, mask):
-                pred_loss = jax.vmap(pred_loss_func, 
-                        in_axes=[None, 0, 0, 0])(
-                        model, obs, next_obs, mask).mean()
-
-
-                U, S, _ = jnp.linalg.svd(I - model.rnn.rnn.W_rec)
-                B = model.rnn.rnn.W_u @ model.rnn.Win.weight.T
-                c = B @ ubar
-                c = c / (jnp.linalg.norm(c) + 1e-8)
-
-                # svd_loss = jnp.sum(((U.T @ B @ ubar) / S)**2) 
-                # Test 1: Removing scaling by singular values
-                # svd_loss = jnp.sum(((U.T @ c))**2)
-
-                # Test 2: Try only penalizing the first singular vector
-                svd_loss = ((U[:,0].T @ B @ ubar) / S[0])**2
-
-                return pred_loss + config['optimizer']['lambda'] * svd_loss
-
+    # Initalize optimizer (adam or adamw)
     learning_rate = config['optimizer']['learning_rate']
     if config['optimizer']['name'].lower() == 'adam':
         optimizer = optax.chain(
@@ -159,6 +131,7 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
     
     opt_state = optimizer.init(eqx.filter(model, eqx.is_inexact_array))
 
+    # ==== Initalize Metrics ====
     initial_validation_loss = loss_func(
         model, 
         validation_x, 
@@ -168,7 +141,6 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
     print(f"Initial Validaiton Loss: {initial_validation_loss:0.4f}",
           flush=True)
 
-    # ==== Initalize Metrics ====
     initial_validation_loss = float(jax.device_get(initial_validation_loss))
     validation_loss_history = [initial_validation_loss]
 
@@ -209,7 +181,8 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
             epoch_y,
             epoch_mask,
             opt_state, 
-            optimizer)
+            optimizer,
+            enforce_stable)
 
         training_loss_history.append(
             jax.device_get(loss_history)
@@ -300,4 +273,3 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
         yaml.safe_dump(config, f)
 
     return validation_loss_history[-1]
-# %%

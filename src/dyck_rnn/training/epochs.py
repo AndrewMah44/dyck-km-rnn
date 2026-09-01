@@ -1,6 +1,5 @@
 import jax
 import equinox as eqx
-import jax.random as jr
 from dyck_rnn.training.steps import train_step
 
 @eqx.filter_jit
@@ -10,7 +9,8 @@ def train_one_epoch(model,
                     epoch_y,
                     epoch_mask,
                     opt_state, 
-                    optimizer):
+                    optimizer,
+                    enforce_stable):
     
     model_params, model_static = eqx.partition(
         model, eqx.is_inexact_array
@@ -32,7 +32,8 @@ def train_one_epoch(model,
             batch_y, 
             batch_mask, 
             opt_state, 
-            optimizer)
+            optimizer,
+            enforce_stable)
         
         # Split param
         new_params, _ = eqx.partition(

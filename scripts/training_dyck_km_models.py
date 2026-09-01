@@ -36,9 +36,18 @@ if 'hidden_size' not in config['model']:
     elif config['model']['cell_type'].lower() in ['lstm', 'gru']:
         config['model']['hidden_size'] = math.ceil(3 * m * math.log2(k))
 
+if 'enforce_stable' in config['optimizer']:
+    if config['optimizer']['enforce_stable']:
+        stability = '_Stable'
+    else:
+        stability = ''
+else:
+    stability = ''
+          
 name = task \
     + f"_k{k:02}_m{m:02}" \
     + f"_{config['model']['cell_type']}" \
+    + stability \
     + f"_h{config['model']['hidden_size']}" \
     + f"_mlp{config['model']['readout_depth']}"
 
