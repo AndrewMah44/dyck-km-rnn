@@ -165,23 +165,17 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
                 config['training']['batch_size'],)
         )
 
-        _, train_sequences = jax.vmap(sample_func)(
-            epoch_lengths, 
-            jr.split(batch_key, 
-                     config['training']['batches_per_epoch'])
-        )
-        epoch_x = train_sequences[:,:,:-1]
-        epoch_y = train_sequences[:,:,1:]
-        epoch_mask = epoch_x != (2 * DyckHMM.k + 1)
+        keys = jr.split(batch_key, config['training']['batches_per_epoch'])
 
         model, opt_state, loss_history = train_one_epoch(
             model, 
+            epoch_lengths,
+            keys,
             loss_func,
-            epoch_x,
-            epoch_y,
-            epoch_mask,
+            sample_func,
             opt_state, 
             optimizer,
+            DyckHMM,
             enforce_stable)
 
         training_loss_history.append(
