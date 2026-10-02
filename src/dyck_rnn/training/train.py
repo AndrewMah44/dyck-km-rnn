@@ -132,6 +132,7 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
     opt_state = optimizer.init(eqx.filter(model, eqx.is_inexact_array))
 
     # ==== Initalize Metrics ====
+    print("here")
     initial_validation_loss = loss_func(
         model, 
         validation_x, 
