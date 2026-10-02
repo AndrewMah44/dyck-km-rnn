@@ -5,7 +5,7 @@ experiment:
 # Remove max length - depends on k. Relationship is in train.py
 data:
   k: 2
-  m: 8
+  m: 16
   alpha: 0.9
 
 # Remove hidden size - depends on k and m. Relationship is in train.py
@@ -14,7 +14,6 @@ model:
   cell_type: 'linear'
   readout_depth : 1
   init_scale: 0.2
-  hidden_size: 2
 
 optimizer:
   name: adam
