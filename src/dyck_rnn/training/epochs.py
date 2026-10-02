@@ -27,8 +27,8 @@ def train_one_epoch(model,
 
         _, train_sequences = sample_func(batch_lengths, batch_key)
     
-        batch_x = train_sequences[:,:,:-1]
-        batch_y = train_sequences[:,:,1:]
+        batch_x = train_sequences[:,:-1]
+        batch_y = train_sequences[:,1:]
         batch_mask = batch_x != (2 * hmm.k + 1)
 
         # Combine trainable params (scanned) with static params (not scanned)
