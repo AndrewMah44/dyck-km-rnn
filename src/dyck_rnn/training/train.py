@@ -74,9 +74,9 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
 
     # Reshape to batch validation function
     validation_x = validation_sequences[:,:-1].reshape(
-        2**5, -1, config['data']['max_length'])
+        2**5, -1, config['data']['max_length']-1)
     validation_y = validation_sequences[:,1:].reshape(
-        2**5, -1, config['data']['max_length'])
+        2**5, -1, config['data']['max_length']-1)
     validation_mask = validation_x != (2 * config['data']['k'] + 1)
 
     # ==== Initalize model ====
