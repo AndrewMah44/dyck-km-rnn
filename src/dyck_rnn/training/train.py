@@ -72,8 +72,11 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
         key = sample_key
     )
 
-    validation_x = validation_sequences[:,:-1]
-    validation_y = validation_sequences[:,1:]
+    # Reshape to batch validation function
+    validation_x = validation_sequences[:,:-1].reshape(
+        2**5, -1, config['data']['max_length'])
+    validation_y = validation_sequences[:,1:].reshape(
+        2**5, -1, config['data']['max_length'])
     validation_mask = validation_x != (2 * config['data']['k'] + 1)
 
     # ==== Initalize model ====
@@ -106,6 +109,18 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
 
         return pred_loss.mean()
 
+    def validation_loss_func(model, obs, next_obs, masks):
+        def f(loss, input):
+            x, y, mask = input
+            loss += loss_func(model, x, y, mask)
+
+            return loss, loss
+
+        loss_sum, _ = jax.lax.scan(f, 0, xs = (obs, next_obs, masks))
+        n_batches = obs.shape[0]
+
+        return loss_sum / n_batches
+    
     # Initalize optimizer (adam or adamw)
     learning_rate = config['optimizer']['learning_rate']
     if config['optimizer']['name'].lower() == 'adam':
@@ -132,8 +147,7 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
     opt_state = optimizer.init(eqx.filter(model, eqx.is_inexact_array))
 
     # ==== Initalize Metrics ====
-    print("here")
-    initial_validation_loss = loss_func(
+    initial_validation_loss = validation_loss_func(
         model, 
         validation_x, 
         validation_y, 
@@ -183,7 +197,7 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
             jax.device_get(loss_history)
         )
         
-        epoch_validation_loss = loss_func(
+        epoch_validation_loss = validation_loss_func(
             model, 
             validation_x, 
             validation_y, 
