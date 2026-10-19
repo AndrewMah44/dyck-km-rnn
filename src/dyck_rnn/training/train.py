@@ -332,6 +332,10 @@ def train_modular_cumsum_runn(run_name, config, run_parent="runs"):
     )
     validation_y = jnp.cumsum(validation_x, axis=1) % n
 
+    # Requires validation_size divisible by validation_batch_size.
+    validation_x = validation_x.reshape(-1, 2**5, validation_x.shape[-1])
+    validation_y = validation_y.reshape(-1, 2**5, validation_x.shape[-1])
+
     # ==== Initalize model ====
     if config['model']['model_class'].lower() == 'recurrent':
         model = RecurrentSequenceModel(
@@ -360,6 +364,16 @@ def train_modular_cumsum_runn(run_name, config, run_parent="runs"):
         return jnp.mean(
             softmax_cross_entropy_with_integer_labels(logits, y)
         )
+
+    def validation_loss_func(model, x, y):
+        def f(total, input):
+            x, y = input
+            return total + loss_func(model, x, y), None
+
+        loss_sum, _ = jax.lax.scan(f, 0, xs = (x, y))
+        n_batches = x.shape[0]
+
+        return loss_sum / n_batches
     
     # Initalize optimizer (adam or adamw)
     learning_rate = config['optimizer']['learning_rate']
@@ -387,7 +401,7 @@ def train_modular_cumsum_runn(run_name, config, run_parent="runs"):
     opt_state = optimizer.init(eqx.filter(model, eqx.is_inexact_array))
 
     # ==== Initalize Metrics ====
-    initial_validation_loss = loss_func(
+    initial_validation_loss = validation_loss_func(
         model, 
         validation_x, 
         validation_y)
@@ -429,7 +443,7 @@ def train_modular_cumsum_runn(run_name, config, run_parent="runs"):
             jax.device_get(loss_history)
         )
         
-        epoch_validation_loss = loss_func(
+        epoch_validation_loss = validation_loss_func(
             model, 
             validation_x, 
             validation_y)
