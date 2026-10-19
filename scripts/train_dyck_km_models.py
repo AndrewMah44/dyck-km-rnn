@@ -48,7 +48,7 @@ name = task \
     + f"_k{k:02}_m{m:02}" \
     + f"_{config['model']['cell_type']}" \
     + stability \
-    + f"_h{config['model']['hidden_size']}" \
+    + f"_h{config['model']['hidden_size']:02}" \
     + f"_mlp{config['model']['readout_depth']}"
 
 if 'lambda' in config['optimizer']:
@@ -61,6 +61,6 @@ if 'comment' in config['experiment']:
 run_name = name + f'/run_{run:02}'
 run_config = deepcopy(config)
 run_config['experiment']['seed'] = seed + run
+run_config['data']['max_length'] = 4 * m * (m+4)
 
 train_dyck_rnn(run_name, run_config)
-

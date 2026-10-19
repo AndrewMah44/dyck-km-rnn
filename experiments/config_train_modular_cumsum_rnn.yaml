@@ -1,0 +1,30 @@
+experiment: 
+  task: "ModularCumSum"
+  seed: 1114
+
+# Give n if you want to explicitly set the number of states
+# Give k and m if you want to match everything to the Dyck RNNs
+data:
+  k: 2
+  m: 8
+
+# Remove hidden size - depends on k and m. Relationship is in train.py
+model:
+  model_class: 'Recurrent'
+  hidden_size: 48
+  cell_type: 'linear'
+  readout_depth : 1
+  init_scale: 0.2
+
+optimizer:
+  name: adam
+  learning_rate: 1.0e-3
+
+training:
+  validation_size: 32768
+  batch_size: 128
+  batches_per_epoch: 8192
+  max_counter: 3
+
+checkpointing:
+  save_dir: checkpoints/

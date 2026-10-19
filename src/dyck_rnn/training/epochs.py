@@ -13,7 +13,6 @@ def train_one_epoch(model,
                     sample_func,
                     opt_state, 
                     optimizer,
-                    hmm,
                     enforce_stable):
 
     model_params, model_static = eqx.partition(
@@ -25,11 +24,7 @@ def train_one_epoch(model,
         model_params, opt_state = carry
         batch_lengths, batch_key = input
 
-        _, train_sequences = sample_func(batch_lengths, batch_key)
-    
-        batch_x = train_sequences[:,:-1]
-        batch_y = train_sequences[:,1:]
-        batch_mask = batch_x != (2 * hmm.k + 1)
+        batch_x, batch_y, batch_mask = sample_func(batch_lengths, batch_key)
 
         # Combine trainable params (scanned) with static params (not scanned)
         scan_model = eqx.combine(model_params, model_static)
