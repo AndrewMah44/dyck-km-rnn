@@ -42,7 +42,7 @@ if 'n' in config['data']:
 # Match to Dyck KM (recommended)
 elif 'k' in config['data'] and 'm' in config['data']:
     k, m = config['data']['k'], config['data']['m']
-    print(f'Making n to Dyck-({k}, {m})...')
+    print(f'Matching n to Dyck-({k}, {m})...')
 
     # Matching State Size, RNN size, etc.
     config['data']['n'] = math.floor((k**(m+1) - 1) / (k-1))
@@ -55,6 +55,10 @@ elif 'k' in config['data'] and 'm' in config['data']:
 
         elif config['model']['cell_type'].lower() in ['lstm', 'gru']:
             config['model']['hidden_size'] = math.ceil(3 * m * math.log2(k))
+    else:
+        print(
+            "Using config-supplied hidden dimension of " \
+            + f"{config['model']['hidden_size']}")
 
 if 'enforce_stable' in config['optimizer']:
     if config['optimizer']['enforce_stable']:
