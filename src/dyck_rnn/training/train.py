@@ -365,6 +365,7 @@ def train_modular_cumsum_runn(run_name, config, run_parent="runs"):
             softmax_cross_entropy_with_integer_labels(logits, y)
         )
 
+    @eqx.filter_jit
     def validation_loss_func(model, x, y):
         def f(total, input):
             x, y = input
