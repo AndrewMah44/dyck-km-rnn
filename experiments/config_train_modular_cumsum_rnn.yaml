@@ -6,12 +6,11 @@ experiment:
 # Give k and m if you want to match everything to the Dyck RNNs
 data:
   k: 2
-  m: 8
+  m: 4
 
 # Remove hidden size - depends on k and m. Relationship is in train.py
 model:
   model_class: 'Recurrent'
-  hidden_size: 48
   cell_type: 'linear'
   readout_depth : 1
   init_scale: 0.2
