@@ -129,8 +129,8 @@ axes[0].plot(ms, num_states, 'ko-')
 axes[0].set_yscale('log')
 axes[0].set_ylabel('Number of States')
 
-axes[1].errorbar(4, PR_04.mean(0), PR_04.std(0), marker='o')
-axes[1].errorbar(8, PR_08.mean(0), PR_08.std(0), marker='o')
+axes[1].errorbar(4,  PR_04.mean(0), PR_04.std(0), marker='o')
+axes[1].errorbar(8,  PR_08.mean(0), PR_08.std(0), marker='o')
 axes[1].errorbar(16, PR_16.mean(0), PR_16.std(0), marker='o')
 axes[1].set_ylabel('Hidden Activation PR')
 
