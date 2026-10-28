@@ -26,15 +26,25 @@ def load_model(
     with (run_path / "config.yaml").open("r") as f:
         config = yaml.safe_load(f)
 
-    blank_model = RecurrentSequenceModel(
-        cell_type=config["model"]["cell_type"],
-        vocab_size=2 * config["data"]["k"] + 2,
-        hidden_size=config["model"]["hidden_size"],
-        out_size=2 * config["data"]["k"] + 2,
-        readout_depth=config["model"]["readout_depth"],
-        rnn_scale=config["model"]["init_scale"],
-        key=jr.PRNGKey(config["experiment"]["seed"]),
-    )
+    if config["experiment"]["task"] == 'DyckKM':
+        blank_model = RecurrentSequenceModel(
+            cell_type = config["model"]["cell_type"],
+            vocab_size = 2 * config["data"]["k"] + 2,
+            hidden_size = config["model"]["hidden_size"],
+            out_size = 2 * config["data"]["k"] + 2,
+            readout_depth = config["model"]["readout_depth"],
+            rnn_scale = config["model"]["init_scale"],
+            key = jr.PRNGKey(config["experiment"]["seed"]),
+        )
+    elif config["experiment"]["task"] == 'ModularCumSum':
+        blank_model = RecurrentSequenceModel(
+            cell_type = config["model"]["cell_type"],
+            vocab_size =  config["data"]["n"], 
+            hidden_size = config["model"]["hidden_size"], 
+            out_size =  config["data"]["n"], 
+            readout_depth = config["model"]["readout_depth"], 
+            rnn_scale = config["model"]["init_scale"],
+            key = jr.PRNGKey(config["experiment"]["seed"]))
 
     # Try loading in the checkpoint's native dtype.
     for dtype in (jnp.float64, jnp.float32):
