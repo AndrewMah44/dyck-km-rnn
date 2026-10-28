@@ -285,7 +285,6 @@ def train_dyck_rnn(run_name, config, run_parent="runs"):
 
     return validation_loss_history[-1]
 
-
 def train_modular_cumsum_runn(run_name, config, run_parent="runs"):
     # ====== Set Up Directory ======
     run_dir = Path(run_parent) / run_name
