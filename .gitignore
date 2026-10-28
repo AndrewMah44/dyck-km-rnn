@@ -4,3 +4,4 @@ __pycache__/
 src/dyck_rnn.egg-info
 *.py[cod]
 /src/dyck_rnn/training/__pycache__
+*.pdf
