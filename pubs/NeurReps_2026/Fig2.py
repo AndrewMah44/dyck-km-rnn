@@ -95,6 +95,29 @@ def early_late_centroids(rnn, seq, mask, states, trial_nos):
 
     return early_centroids, late_centroids, pca
 
+from dyck_rnn.training.losses import kl_div, kl_div2
+from dyck_rnn.data.opt_probs import get_opt_probs
+
+@jax.jit
+def projected_performance(model, projection_vec, 
+                          seqs, states, masks, opt_probs):
+    # Pull model
+    rnn = model.rnn
+    readout = jax.vmap(jax.vmap(model.readout))
+
+    # Orthogonal projection matrix
+    projection_vec = projection_vec / jnp.linalg.norm(projection_vec)
+ 
+    # ==== Simulate and get performance ====
+    H = jax.vmap(rnn)(seqs)
+    val = jnp.nanmedian(H[:,:128] @ drift_vector)
+
+    Hproj = H - (H @ projection_vec - val) @ projection_vec.T
+    mdl_probs_proj = readout(Hproj)
+    dkl_proj = kl_div2(mdl_probs_proj, opt_probs, states, masks)
+
+    return dkl_proj
+
 #%%
 # ==== Data Set Up ====
 model_dir = RUN_DIR / RUN_NAME
@@ -223,28 +246,6 @@ for i, model in enumerate(models):
     pcas.append(pca)
 
 #%%
-from dyck_rnn.training.losses import kl_div, kl_div2
-from dyck_rnn.data.opt_probs import get_opt_probs
-
-@jax.jit
-def projected_performance(model, projection_vec, 
-                          seqs, states, masks, opt_probs):
-    # Pull model
-    rnn = model.rnn
-    readout = jax.vmap(jax.vmap(model.readout))
-
-    # Orthogonal projection matrix
-    projection_vec = projection_vec / jnp.linalg.norm(projection_vec)
-    P = jnp.eye(rnn.hidden_size) - projection_vec @ projection_vec.T
- 
-    # ==== Simulate and get performance ====
-    Hproj = jax.vmap(rnn)(seqs) @ P
-    mdl_probs_proj = readout(Hproj)
-    dkl_proj = kl_div2(mdl_probs_proj, opt_probs, states, masks)
-
-    return dkl_proj
-
-#%%
 
 proj_states, proj_sequences, proj_masks, proj_trial_no = \
     sample_dataset(k, m, 500, proj_key)
@@ -274,8 +275,8 @@ for run in range(n_runs):
     )
 
     # Get Projected Performance
-    delta = (late_centroid_mat[run] - early_centroid_mat[run]).T
-    U, _, _ = jnp.linalg.svd(delta)
+    delta = late_centroid_mat[run] - early_centroid_mat[run]
+    U, _, _ = jnp.linalg.svd(delta.T)
     drift_vector = jnp.expand_dims(U[:,0], -1)
 
     dkl_proj = projected_performance(
@@ -295,7 +296,10 @@ for run in range(n_runs):
         )
     )
 
-#%%
+    print(control_perf[run])
+    print(proj_perf[run])
+
+
 fig, axes = plt.subplots(1, 2, figsize=(8, 4))
 axes[0].plot([1, 2], control_perf[non_generalizers].T)
 axes[0].axhline(2e-2, color='k', linestyle='--')
@@ -316,7 +320,8 @@ n_vecs = 250
 
 null_proj = jnp.zeros((n_runs, n_vecs, 2))
 
-for run in range(n_runs):
+# for run in range(n_runs):
+for run in non_generalizers:
     print(run)
 
     model = models[run]
@@ -343,7 +348,7 @@ for run in range(n_runs):
 
     _, key = jr.split(key, 2)
 
-#%%
+
 for run in non_generalizers:
     n = jnp.sum(null_proj[run, :, 1] <= proj_perf[run,1])
 
