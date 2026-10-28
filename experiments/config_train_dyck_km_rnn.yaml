@@ -4,8 +4,8 @@ experiment:
 
 # Remove max length - depends on k. Relationship is in train.py
 data:
-  k: 2
-  m: 16
+  k: 32
+  m: 32
   alpha: 0.9
 
 # Remove hidden size - depends on k and m. Relationship is in train.py
