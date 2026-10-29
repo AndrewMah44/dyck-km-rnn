@@ -38,6 +38,6 @@ if jax.default_backend() != "gpu":
     raise RuntimeError("JAX did not initialize the GPU backend")
 PY
 
-srun --cpu-bind=cores python scripts/training_dyck_km_models.py \
+srun --cpu-bind=cores python scripts/train_dyck_km_models.py \
     --config experiments/config_train_dyck_km_rnn.yaml \
     --r "$SLURM_ARRAY_TASK_ID"
