@@ -8,7 +8,7 @@
 #SBATCH --constraint=a100
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks=1
-#SBATCH --mem=3G
+#SBATCH --mem=5G
 #SBATCH --time=2:00:00
 #SBATCH --mail-type=END,FAIL,ARRAY_TASKS
 #SBATCH --mail-user=amah@flatironinstitute.org
