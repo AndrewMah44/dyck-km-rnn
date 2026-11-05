@@ -27,6 +27,7 @@ training:
   batch_size: 64
   batches_per_epoch: 1024
   max_counter: 3
+  max_epochs: 1000
 
 checkpointing:
   save_dir: checkpoints/
