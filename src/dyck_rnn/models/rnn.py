@@ -122,7 +122,8 @@ class RNN(eqx.Module):
     def __init__(self,
                  cell_type, 
                  vocab_size, 
-                 hidden_size, 
+                 hidden_size,
+                 input_dtype = "int", 
                  *, 
                  rnn_scale = 0.1,
                  key):
@@ -131,11 +132,19 @@ class RNN(eqx.Module):
 
         self.hidden_size = hidden_size
 
-        self.Win = eqx.nn.Embedding(
-            num_embeddings = vocab_size,
-            embedding_size = hidden_size,
-            key = in_key
-        )
+        if input_dtype == "int":
+            self.Win = eqx.nn.Embedding(
+                num_embeddings = vocab_size,
+                embedding_size = hidden_size,
+                key = in_key
+            )
+        elif input_dtype == "cont":
+            self.Win = eqx.nn.Linear(
+                in_features = vocab_size,
+                out_features = hidden_size,
+                use_bias = False,
+                key = in_key
+            )
 
         if self.cell_type == 'linear':
             self.rnn = LinearRecurrentCell(
@@ -197,6 +206,7 @@ class RecurrentSequenceModel(eqx.Module):
             hidden_size, 
             out_size,
             readout_depth,
+            input_dtype = "int", 
             *, 
             rnn_scale = 0.1,
             key):
@@ -207,6 +217,7 @@ class RecurrentSequenceModel(eqx.Module):
             vocab_size = vocab_size, 
             hidden_size = hidden_size, 
             rnn_scale = rnn_scale,
+            input_dtype = input_dtype,
             key = rnn_key)
         
         self.readout = Readout(

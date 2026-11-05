@@ -45,7 +45,20 @@ def load_model(
             readout_depth = config["model"]["readout_depth"], 
             rnn_scale = config["model"]["init_scale"],
             key = jr.PRNGKey(config["experiment"]["seed"]))
-
+        
+    elif config["experiment"]["task"] == 'GaussianPred':
+        blank_model = RecurrentSequenceModel(
+            cell_type = config["model"]["cell_type"],
+            vocab_size =  1, 
+            hidden_size = config["model"]["hidden_size"], 
+            out_size =  1, 
+            readout_depth = config["model"]["readout_depth"], 
+            rnn_scale = config["model"]["init_scale"],
+            input_dtype = "cont",
+            key = jr.PRNGKey(config["experiment"]["seed"]))
+    else:
+        raise ValueError(f"{config["experiment"]["task"]} is not valid task.")
+    
     # Try loading in the checkpoint's native dtype.
     for dtype in (jnp.float64, jnp.float32):
         try:

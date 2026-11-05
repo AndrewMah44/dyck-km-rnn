@@ -1,0 +1,32 @@
+experiment: 
+  task: 'GaussianPred'
+  seed: 1114
+
+
+data:
+  mu0: 5
+  tau0: 0.75
+  sigma: 0.5
+  max_length: 256
+
+# Remove hidden size - depends on k and m. Relationship is in train.py
+model:
+  model_class: 'Recurrent'
+  cell_type: 'linear'
+  hidden_size: 32
+  readout_depth : 1
+  init_scale: 0.2
+
+optimizer:
+  name: adamw
+  learning_rate: 1.0e-3
+  weight_decay: 1.0e-2
+
+training:
+  validation_size: 32768
+  batch_size: 64
+  batches_per_epoch: 1024
+  max_counter: 3
+
+checkpointing:
+  save_dir: checkpoints/
