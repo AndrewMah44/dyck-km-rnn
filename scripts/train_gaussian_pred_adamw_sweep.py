@@ -20,7 +20,6 @@ with args.config.open("r") as f:
 # ====== Set Up Run Name ======
 task = sweep_config['experiment']['task']
 seed = sweep_config['experiment']['seed']
-n_runs = sweep_config['experiment']['n_runs']
 
 if "comment" in sweep_config['experiment']:
     comment = "_" + sweep_config['experiment']['comment']
