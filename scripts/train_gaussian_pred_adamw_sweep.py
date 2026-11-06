@@ -50,8 +50,8 @@ min_scale = sweep_config['sweep']['min_scale']
 max_scale = sweep_config['sweep']['max_scale']
 n_scales = sweep_config['sweep']['n_scales']
 
-for round in range(3):
-    print(f"====== Round {round}: [{min_scale}, {max_scale}] ======")
+for round_idx in range(3):
+    print(f"====== Round {round_idx}: [{min_scale}, {max_scale}] ======")
     weight_decays = jnp.logspace(min_scale, max_scale, n_scales)
 
     final_validation_loss = jnp.zeros(n_scales)
@@ -60,7 +60,7 @@ for round in range(3):
         run_config = deepcopy(sweep_config)
         run_config['optimizer']['weight_decay'] = weight_decay.item()
 
-        run_name = f"fit_{round:02}_{i:02}"
+        run_name = f"fit_{round_idx:02}_{i:02}"
         loss = train_gaussian_pred_rnn(
             run_name, 
             run_config, 
@@ -70,5 +70,9 @@ for round in range(3):
 
     best_idx = jnp.argmin(final_validation_loss)
 
-    min_scale = weight_decays[max(best_idx-1, 0)]
-    max_scale = weight_decays[min(best_idx+1, n_scales-1)]
+    min_scale = jnp.log10(weight_decays[max(best_idx-1, 0)])
+    max_scale = jnp.log10(weight_decays[min(best_idx+1, n_scales-1)])
+
+    
+
+
